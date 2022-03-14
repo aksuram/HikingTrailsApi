@@ -1,4 +1,4 @@
-namespace WebApi
+namespace HikingTrailsApi.WebApi
 {
     public class WeatherForecast
     {

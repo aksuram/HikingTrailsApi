@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebApi.Controllers
+namespace HikingTrailsApi.WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
