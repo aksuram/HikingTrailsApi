@@ -1,3 +1,5 @@
+using System;
+
 namespace HikingTrailsApi.WebApi
 {
     public class WeatherForecast
