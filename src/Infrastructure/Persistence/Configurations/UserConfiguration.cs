@@ -8,8 +8,18 @@ namespace HikingTrailsApi.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.Property(x => x.UserName)
+            builder.Property(x => x.Id)
                 .IsRequired();
+
+            builder.Property(x => x.Email)
+                .IsRequired();
+
+            builder.Property(x => x.Password)
+                .IsRequired();
+
+            builder.Property(x => x.Role)
+                .IsRequired();
+
 
             builder.Property(x => x.FirstName)
                 .IsRequired();
@@ -17,7 +27,8 @@ namespace HikingTrailsApi.Infrastructure.Persistence.Configurations
             builder.Property(x => x.LastName)
                 .IsRequired();
 
-            builder.Property(x => x.Role)
+
+            builder.Property(x => x.IsEmailConfirmed)
                 .IsRequired();
 
             builder.Property(x => x.IsDeleted)

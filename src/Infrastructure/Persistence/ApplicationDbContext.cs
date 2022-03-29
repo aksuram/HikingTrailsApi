@@ -1,8 +1,6 @@
 ﻿using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Domain.Entities;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -10,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HikingTrailsApi.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : IdentityDbContext<User, UserRole, Guid>, IApplicationDbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public ApplicationDbContext()
         {
@@ -21,6 +19,7 @@ namespace HikingTrailsApi.Infrastructure.Persistence
         }
 
         //ENTITY DATABASE TABLE SETS
+        public DbSet<User> Users { get; set; }
         public DbSet<Event> Events { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

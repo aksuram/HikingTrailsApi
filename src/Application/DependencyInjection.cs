@@ -12,7 +12,7 @@ namespace HikingTrailsApi.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            //services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
             services.AddMediatR(Assembly.GetExecutingAssembly());
 
             //TODO: Check if needed
@@ -20,7 +20,7 @@ namespace HikingTrailsApi.Application
             //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 
             //TODO: Check Transient and Scoped meaning
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(EventLoggingBehaviour<,>));
+            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(EventLoggingBehaviour<,>));
 
             services.AddScoped<IApplicationIdentityManager, ApplicationIdentityManager>();
 

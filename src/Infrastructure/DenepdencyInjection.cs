@@ -1,15 +1,9 @@
-﻿using HikingTrailsApi.Application.Common.Identity;
-using HikingTrailsApi.Application.Common.Interfaces;
-using HikingTrailsApi.Domain.Entities;
+﻿using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Infrastructure.Persistence;
 using HikingTrailsApi.Infrastructure.Services;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Text;
 
 namespace HikingTrailsApi.Infrastructure
 {
@@ -20,20 +14,20 @@ namespace HikingTrailsApi.Infrastructure
             //TODO: Check how LazyLoading works
             //DbContext
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseLazyLoadingProxies().UseNpgsql(
+                options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
                     x => x.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-            services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
+            services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
             //DbContext factory
-            DbContextOptionsBuilder optionsBuilder = new DbContextOptionsBuilder();
+            /*DbContextOptionsBuilder optionsBuilder = new DbContextOptionsBuilder();
             optionsBuilder.UseLazyLoadingProxies().UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
                 x => x.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
 
             services.AddSingleton<IApplicationDbContextFactory<IApplicationDbContext>>(
-                new ApplicationDbContextFactory(optionsBuilder.Options));
+                new ApplicationDbContextFactory(optionsBuilder.Options));*/
 
             //Other
             services.AddTransient<IDateTime, DateTimeService>();
@@ -43,14 +37,14 @@ namespace HikingTrailsApi.Infrastructure
 
         public static IServiceCollection AddApplicationIdentity(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            serviceCollection.AddIdentity<User, UserRole>()
+            /*serviceCollection.AddIdentity<User, UserRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             serviceCollection.Configure<IdentityOptions>(options =>
             {
                 options.Lockout.AllowedForNewUsers = false;
                 options.Password.RequireNonAlphanumeric = false;
-            });
+            });*/
 
             //serviceCollection.ConfigureApplicationCookie(options =>
             //{
@@ -60,13 +54,13 @@ namespace HikingTrailsApi.Infrastructure
             //    options.LogoutPath = $"/logout";
             //});
 
-            var jwtSettings = new JwtSettings()
-            {
-                Secret = configuration.GetSection("JwtSettings")["Secret"]
-            };
-            serviceCollection.AddSingleton(jwtSettings);
+            //var jwtSettings = new JwtSettings()
+            //{
+            //    Secret = configuration.GetSection("JwtSettings")["Secret"]
+            //};
+            //serviceCollection.AddSingleton(jwtSettings);
 
-            serviceCollection
+            /*serviceCollection
                 .AddAuthentication()
                 .AddJwtBearer(x =>
                 {
@@ -80,9 +74,9 @@ namespace HikingTrailsApi.Infrastructure
                         RequireExpirationTime = true,
                         ValidateLifetime = true
                     };
-                });
+                });*/
 
-            serviceCollection.AddHttpContextAccessor();
+            //serviceCollection.AddHttpContextAccessor();
 
             return serviceCollection;
         }

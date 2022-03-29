@@ -29,41 +29,38 @@ namespace HikingTrailsApi.WebApi
             services.AddApplicationIdentity(Configuration);
 
             services.AddSingleton<IConfiguration>(Configuration);
-            
-            //TODO: Not needed?
-            services.AddRazorPages();
 
             //TODO: Check what this adds specifically
-            services.AddMvc()
-                .AddFluentValidation();
+            services.AddMvc();
+            //    .AddFluentValidation();
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Hiking Trails", Version = "v1" });
-                var securityScheme = new OpenApiSecurityScheme()
-                {
-                    Description = "JWT Bearer authorization",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT"
-                };
-                c.AddSecurityDefinition("Bearer", securityScheme);
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
-                    {
-                        new OpenApiSecurityScheme()
-                        {
-                            Reference = new OpenApiReference()
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new List<string>()
-                    }
-                });
+                //var securityScheme = new OpenApiSecurityScheme()
+                //{
+                //    Description = "JWT Bearer authorization",
+                //    Name = "Authorization",
+                //    In = ParameterLocation.Header,
+                //    Type = SecuritySchemeType.ApiKey,
+                //    Scheme = "Bearer",
+                //    BearerFormat = "JWT"
+                //};
+                //c.AddSecurityDefinition("Bearer", securityScheme);
+                //c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                //{
+                //    {
+                //        new OpenApiSecurityScheme()
+                //        {
+                //            Reference = new OpenApiReference()
+                //            {
+                //                Type = ReferenceType.SecurityScheme,
+                //                Id = "Bearer"
+                //            }
+                //        },
+                //        new List<string>()
+                //    }
+                //});
             });
         }
 
@@ -80,13 +77,11 @@ namespace HikingTrailsApi.WebApi
 
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Hiking Trails v1"));
             }
             else
             {
-                //app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
@@ -94,17 +89,14 @@ namespace HikingTrailsApi.WebApi
             //TODO: Add CORS configuration
 
             app.UseHttpsRedirection();
-            //app.UseStaticFiles();
 
             app.UseRouting();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            //app.UseAuthentication();
+            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
-                //TODO: Not needed?
-                //endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
         }
