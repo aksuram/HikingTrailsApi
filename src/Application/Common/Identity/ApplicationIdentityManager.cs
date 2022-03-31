@@ -23,128 +23,21 @@ namespace HikingTrailsApi.Application.Common.Identity
         private readonly IApplicationDbContext _applicationDbContext;
         //private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDateTime _dateTime;
-        //private readonly JwtSettings _jwtSettings;
+        private readonly JwtSettings _jwtSettings;
 
         //private readonly Dictionary<Role, string> _roles = TranslationHelper.Roles;
 
         public ApplicationIdentityManager(
             IApplicationDbContext applicationDbContext,
             //IHttpContextAccessor httpContextAccessor,
-            IDateTime dateTime)
-            //JwtSettings jwtSettings)
+            IDateTime dateTime,
+            JwtSettings jwtSettings)
         {
             _applicationDbContext = applicationDbContext;
             //_httpContextAccessor = httpContextAccessor;
             _dateTime = dateTime;
-            //_jwtSettings = jwtSettings;
+            _jwtSettings = jwtSettings;
         }
-
-        //public async Task<string> ApiLogIn(string username, string password)
-        //{
-        //    User user;
-
-        //    try
-        //    {
-        //        user = await _userManager.FindByNameAsync(username);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        throw new LogInException();
-        //    }
-
-        //    if (user == null || user.IsDeleted) { throw new LogInException(); }
-
-        //    var signInResult = await _signInManager.PasswordSignInAsync(
-        //        username ?? "", password ?? "", false, false);
-
-        //    if (!signInResult.Succeeded) { throw new LogInException(); }
-
-        //    //Log the event
-        //    using var applicationDbContext = _applicationDbContextFactory.CreateDbContext();
-        //    try
-        //    {
-        //        applicationDbContext.Events.Add(new Event()
-        //        {
-        //            Description = $"Prisijungė prie sistemos",
-        //            UserId = user.Id,
-        //            CreationDate = _dateTime.Now
-        //        });
-
-        //        await applicationDbContext.SaveChangesAsync(CancellationToken.None);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new DatabaseException("Nepavyko išsaugoti duomenų duomenų bazėje", e);
-        //    }
-
-        //    return GenerateJwtToken(user);
-        //}
-
-        //private string GenerateJwtToken(User user)
-        //{
-        //    var secret = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
-
-        //    var securityTokenDescriptor = new SecurityTokenDescriptor()
-        //    {
-        //        //TODO: add claims which could be used client side
-        //        Subject = new ClaimsIdentity(new[]
-        //        {
-        //            new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-        //            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        //            new Claim("id", user.Id.ToString()),
-        //            new Claim("roles", user.Role.ToString())
-        //        }),
-        //        Expires = _dateTime.Now.AddDays(7),
-        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256Signature)
-        //    };
-
-        //    var tokenHandler = new JwtSecurityTokenHandler();
-        //    var token = tokenHandler.CreateToken(securityTokenDescriptor);
-
-        //    return tokenHandler.WriteToken(token);
-        //}
-
-        //public async Task LogIn(UserLoginDto userLoginDto)
-        //{
-        //    //Validate user login dto: email is not null and in email form, password is not null
-
-        //    User user;
-
-        //    try
-        //    {
-        //        user = await _applicationDbContext.Users
-        //            .FirstOrDefaultAsync(x => x.Email == userLoginDto.Email);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        throw new LogInException();
-        //    }
-
-        //    if (user == null || user.IsDeleted) { throw new LogInException(); }
-
-        //    var signInResult = await _signInManager.PasswordSignInAsync(
-        //        username ?? "", password ?? "", false, false);
-
-        //    if (!signInResult.Succeeded) { throw new LogInException(); }
-
-        //    //Log the event
-        //    using var applicationDbContext = _applicationDbContextFactory.CreateDbContext();
-        //    try
-        //    {
-        //        applicationDbContext.Events.Add(new Event()
-        //        {
-        //            Description = $"Prisijungė prie sistemos",
-        //            UserId = user.Id,
-        //            CreationDate = _dateTime.Now
-        //        });
-
-        //        await applicationDbContext.SaveChangesAsync(CancellationToken.None);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new DatabaseException("Nepavyko išsaugoti duomenų duomenų bazėje", e);
-        //    }
-        //}
 
         //public async Task LogOut()
         //{
@@ -186,9 +79,71 @@ namespace HikingTrailsApi.Application.Common.Identity
         //    }
         //}
 
+        public async Task<Result<string>> LogIn(UserLoginDto userLoginDto)
+        {
+            if (userLoginDto == null) return Result<string>.Failure();
+
+            //TODO: Iskelti validation?
+            var userLoginDtoValidator = new UserLoginDtoValidator();
+            var validationResult = userLoginDtoValidator.Validate(userLoginDto);
+
+            if (!validationResult.IsValid)
+            {
+                return Result<string>.Failure(validationResult.Errors.Select(x =>
+                    new FieldError(x.PropertyName, x.ErrorMessage)));
+            }
+
+            var user = await _applicationDbContext.Users
+                .FirstOrDefaultAsync(x => x.Email.ToLower() == userLoginDto.Email.ToLower());
+
+            if (user == null || user.IsDeleted || !user.IsEmailConfirmed)
+            {
+                return Result<string>.Failure("Login", "Couldn't login. Check if user email and password was entered correctly and if you have already confirmed your email.");
+            }
+
+            var isPasswordCorrect = BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password);
+
+            if (!isPasswordCorrect)
+            {
+                return Result<string>.Failure("Login", "Couldn't login. Check if user email and password was entered correctly and if you have already confirmed your email.");
+            }
+
+            user.LastLoginDate = _dateTime.Now;
+            await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
+
+            return Result<string>.Success(GenerateJwtToken(user));
+        }
+
+        private string GenerateJwtToken(User user)
+        {
+            var secret = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
+
+            var securityTokenDescriptor = new SecurityTokenDescriptor()
+            {
+                //TODO: add claims which could be used client side
+                //TODO: change token expiration date
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim("id", user.Id.ToString()),
+                    new Claim("role", user.Role.ToString())
+                }),
+                Expires = _dateTime.Now.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(securityTokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
         public async Task<Result> RegisterUser(UserRegistrationDto userRegistrationDto)
         {
-            //TODO: Check if dto can be null at all
+            if (userRegistrationDto == null) return Result.Failure();
+
+            //TODO: Iskelti validation?
             var userRegistrationDtoValidator = new UserRegistrationDtoValidator(_applicationDbContext);
             var validationResult = userRegistrationDtoValidator.Validate(userRegistrationDto);
 
@@ -198,12 +153,10 @@ namespace HikingTrailsApi.Application.Common.Identity
                     new FieldError(x.PropertyName, x.ErrorMessage)));
             }
 
-            //TODO: Hash password
-
             var user = new User()
             {
                 Email = userRegistrationDto.Email,
-                Password = userRegistrationDto.Password,
+                Password = BCrypt.Net.BCrypt.HashPassword(userRegistrationDto.Password),
                 FirstName = userRegistrationDto.FirstName,
                 LastName = userRegistrationDto.LastName,
                 CreationDate = _dateTime.Now

@@ -2,10 +2,6 @@
 using HikingTrailsApi.Application.Common.Helpers;
 using HikingTrailsApi.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,7 +56,8 @@ namespace HikingTrailsApi.Application.Users
                 .WithMessage("Slaptažodžiai turi sutapti");
         }
 
-        private static async Task<bool> UniqueEmail(string email, CancellationToken cancellationToken, IApplicationDbContext applicationDbContext)
+        private static async Task<bool> UniqueEmail(string email,
+            CancellationToken cancellationToken, IApplicationDbContext applicationDbContext)
         {
             return await applicationDbContext.Users
                 .AllAsync(x => x.Email != email, cancellationToken);

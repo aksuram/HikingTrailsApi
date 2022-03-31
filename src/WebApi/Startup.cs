@@ -1,13 +1,10 @@
-﻿using FluentValidation.AspNetCore;
-using HikingTrailsApi.Application;
+﻿using HikingTrailsApi.Application;
 using HikingTrailsApi.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
-using System.Collections.Generic;
 using System.Globalization;
 
 namespace HikingTrailsApi.WebApi
@@ -26,42 +23,13 @@ namespace HikingTrailsApi.WebApi
             services.AddApplication();
             services.AddInfrastructure(Configuration);
 
-            services.AddApplicationIdentity(Configuration);
+            services.ConfigureApplicationIdentity(Configuration);
 
-            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddSingleton(Configuration);
 
-            //TODO: Check what this adds specifically
             services.AddMvc();
-            //    .AddFluentValidation();
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Hiking Trails", Version = "v1" });
-                //var securityScheme = new OpenApiSecurityScheme()
-                //{
-                //    Description = "JWT Bearer authorization",
-                //    Name = "Authorization",
-                //    In = ParameterLocation.Header,
-                //    Type = SecuritySchemeType.ApiKey,
-                //    Scheme = "Bearer",
-                //    BearerFormat = "JWT"
-                //};
-                //c.AddSecurityDefinition("Bearer", securityScheme);
-                //c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                //{
-                //    {
-                //        new OpenApiSecurityScheme()
-                //        {
-                //            Reference = new OpenApiReference()
-                //            {
-                //                Type = ReferenceType.SecurityScheme,
-                //                Id = "Bearer"
-                //            }
-                //        },
-                //        new List<string>()
-                //    }
-                //});
-            });
+            services.ConfigureSwagger();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -92,8 +60,8 @@ namespace HikingTrailsApi.WebApi
 
             app.UseRouting();
 
-            //app.UseAuthentication();
-            //app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

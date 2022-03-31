@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
 namespace HikingTrailsApi.WebApi.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize]
     [ApiController]
     public class TestController : ControllerBase
     {
@@ -15,7 +14,7 @@ namespace HikingTrailsApi.WebApi.Controllers
             return Ok("Užklausa gauta");
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Administrator")]
         [HttpGet("api/test2")]
         public ActionResult Test2()
         {

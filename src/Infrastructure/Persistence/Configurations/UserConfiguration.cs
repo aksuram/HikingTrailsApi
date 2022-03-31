@@ -8,6 +8,10 @@ namespace HikingTrailsApi.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
+            builder.HasIndex(x => x.Email)
+                .IsUnique();
+
+
             builder.Property(x => x.Id)
                 .IsRequired();
 
