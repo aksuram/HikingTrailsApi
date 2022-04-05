@@ -18,9 +18,17 @@ namespace HikingTrailsApi.Infrastructure.Persistence
         {
         }
 
+        //CREATE/UPDATE DATABASE
+        //1) Add migrations from main folder
+        //dotnet ef migrations add InitialCreate --project src\Infrastructure --startup-project src\WebApi --output-dir Persistence\Migrations
+        //2) Create/update database from main folder
+        //dotnet ef database update --project src\Infrastructure --startup-project src\WebApi
+
         //ENTITY DATABASE TABLE SETS
         public DbSet<User> Users { get; set; }
         public DbSet<Event> Events { get; set; }
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<Comment> Comments { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -31,7 +39,7 @@ namespace HikingTrailsApi.Infrastructure.Persistence
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            //Disable default on delete cascade behavior
+            //Disable the default "on delete cascade" behavior
             foreach (var foreignKey in builder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 foreignKey.DeleteBehavior = DeleteBehavior.Restrict;

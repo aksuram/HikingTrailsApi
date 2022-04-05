@@ -1,4 +1,4 @@
-﻿namespace HikingTrailsApi.Application.Models
+﻿namespace HikingTrailsApi.Application.Common.Models
 {
     public enum ResultType
     {

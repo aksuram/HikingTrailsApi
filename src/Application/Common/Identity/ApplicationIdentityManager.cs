@@ -1,5 +1,6 @@
-﻿using HikingTrailsApi.Application.Common.Interfaces;
-using HikingTrailsApi.Application.Models;
+﻿using AutoMapper;
+using HikingTrailsApi.Application.Common.Interfaces;
+using HikingTrailsApi.Application.Common.Models;
 using HikingTrailsApi.Application.Users;
 using HikingTrailsApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -17,22 +18,20 @@ namespace HikingTrailsApi.Application.Common.Identity
     public class ApplicationIdentityManager : IApplicationIdentityManager
     {
         private readonly IApplicationDbContext _applicationDbContext;
-        //private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDateTime _dateTime;
         private readonly JwtSettings _jwtSettings;
-
-        //private readonly Dictionary<Role, string> _roles = TranslationHelper.Roles;
+        private readonly IMapper _mapper;
 
         public ApplicationIdentityManager(
             IApplicationDbContext applicationDbContext,
-            //IHttpContextAccessor httpContextAccessor,
             IDateTime dateTime,
-            JwtSettings jwtSettings)
+            JwtSettings jwtSettings,
+            IMapper mapper)
         {
             _applicationDbContext = applicationDbContext;
-            //_httpContextAccessor = httpContextAccessor;
             _dateTime = dateTime;
             _jwtSettings = jwtSettings;
+            _mapper = mapper;
         }
 
         //public async Task LogOut()
@@ -79,7 +78,6 @@ namespace HikingTrailsApi.Application.Common.Identity
         {
             if (userLoginDto == null) return Result<UserLoginVm>.BadRequest();   //400
 
-            //TODO: Iskelti validation?
             var userLoginDtoValidator = new UserLoginDtoValidator();
             var validationResult = userLoginDtoValidator.Validate(userLoginDto);
 
@@ -148,17 +146,16 @@ namespace HikingTrailsApi.Application.Common.Identity
             return tokenHandler.WriteToken(token);
         }
 
-        public async Task<Result> RegisterUser(UserRegistrationDto userRegistrationDto)
+        public async Task<Result<UserVm>> RegisterUser(UserRegistrationDto userRegistrationDto)
         {
-            if (userRegistrationDto == null) return Result.BadRequest();    //400
+            if (userRegistrationDto == null) return Result<UserVm>.BadRequest();    //400
 
-            //TODO: Iskelti validation?
             var userRegistrationDtoValidator = new UserRegistrationDtoValidator(_applicationDbContext);
             var validationResult = userRegistrationDtoValidator.Validate(userRegistrationDto);
 
             if (!validationResult.IsValid)
             {
-                return Result.BadRequest(validationResult.Errors.Select(x =>
+                return Result<UserVm>.BadRequest(validationResult.Errors.Select(x =>
                     new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
@@ -184,110 +181,7 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
 
-            //TODO: Change to 201?
-            return Result.Success();    //200
+            return Result<UserVm>.Created(_mapper.Map<User, UserVm>(user)); //201
         }
-
-        //public async Task DeleteUser(Guid id)
-        //{
-        //    if (!Guid.TryParse(_httpContextAccessor?.HttpContext?.User?
-        //        .FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
-        //    {
-        //        throw new NotFoundException("Nepavyko surasti prisijungusio naudotojo duomenų");
-        //    }
-
-        //    User user;
-        //    try
-        //    {
-        //        user = await _userManager.FindByIdAsync(id.ToString());
-
-        //        if (user == null)
-        //        {
-        //            throw new NotFoundException("Nepavyko surasti trinamo naudotojo duomenų");
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new NotFoundException("Nepavyko surasti trinamo naudotojo duomenų", e);
-        //    }
-
-        //    user.IsDeleted = true;
-
-        //    if (!(await _userManager.UpdateAsync(user)).Succeeded)
-        //    {
-        //        throw new IdentityException("Nepavyko ištrinti sistemos naudotojo");
-        //    }
-
-        //    //Log the event
-        //    using var applicationDbContext = _applicationDbContextFactory.CreateDbContext();
-        //    try
-        //    {
-        //        applicationDbContext.Events.Add(new Event()
-        //        {
-        //            Description = $"Ištrynė sistemos naudotoją {user.FirstName} {user.LastName}",
-        //            UserId = userId,
-        //            CreationDate = _dateTime.Now
-        //        });
-
-        //        await applicationDbContext.SaveChangesAsync(CancellationToken.None);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new DatabaseException("Nepavyko išsaugoti duomenų duomenų bazėje", e);
-        //    }
-        //}
-
-        //public async Task UpdateUser(UserEditDto userEditDto)
-        //{
-        //    if (!Guid.TryParse(_httpContextAccessor?.HttpContext?.User?
-        //        .FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
-        //    {
-        //        throw new NotFoundException("Nepavyko surasti prisijungusio naudotojo duomenų");
-        //    }
-
-        //    User user;
-        //    try
-        //    {
-        //        user = await _userManager.FindByIdAsync(userEditDto.Id.ToString());
-
-        //        if (user == null)
-        //        {
-        //            throw new NotFoundException("Nepavyko surasti redaguojamo naudotojo duomenų");
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new NotFoundException("Nepavyko surasti redaguojamo naudotojo duomenų", e);
-        //    }
-
-        //    user.UserName = userEditDto.UserName;
-        //    user.FirstName = userEditDto.FirstName;
-        //    user.LastName = userEditDto.LastName;
-        //    user.Role = userEditDto.Role;
-        //    user.IsDeleted = userEditDto.IsDeleted;
-
-        //    if (!(await _userManager.UpdateAsync(user)).Succeeded)
-        //    {
-        //        throw new IdentityException("Nepavyko redaguoti sistemos naudotojo");
-        //    }
-
-        //    //Log the event
-        //    using var applicationDbContext = _applicationDbContextFactory.CreateDbContext();
-        //    try
-        //    {
-        //        applicationDbContext.Events.Add(new Event()
-        //        {
-        //            Description = $"Redagavo sistemos naudotoją {user.FirstName} {user.LastName}",
-        //            UserId = userId,
-        //            CreationDate = _dateTime.Now
-        //        });
-
-        //        await applicationDbContext.SaveChangesAsync(CancellationToken.None);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new DatabaseException("Nepavyko išsaugoti duomenų duomenų bazėje", e);
-        //    }
-        //}
     }
 }

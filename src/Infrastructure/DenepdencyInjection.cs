@@ -53,7 +53,7 @@ namespace HikingTrailsApi.Infrastructure
                     };
                 });
 
-            //serviceCollection.AddHttpContextAccessor();
+            serviceCollection.AddHttpContextAccessor();
 
             return serviceCollection;
         }

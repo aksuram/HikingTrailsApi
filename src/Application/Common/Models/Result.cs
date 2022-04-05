@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace HikingTrailsApi.Application.Models
+namespace HikingTrailsApi.Application.Common.Models
 {
     public class Result<T> where T : class
     {
@@ -25,6 +25,18 @@ namespace HikingTrailsApi.Application.Models
         public static Result<T> Success(T value)
         {
             return new Result<T>(ResultType.Success, null, value);
+        }
+
+        //201
+        public static Result<T> Created(T value)
+        {
+            return new Result<T>(ResultType.Created, null, value);
+        }
+
+        //204
+        public static Result<T> NoContent()
+        {
+            return new Result<T>(ResultType.NoContent, null, null); ;
         }
 
         //400
@@ -97,6 +109,18 @@ namespace HikingTrailsApi.Application.Models
         public static Result Success()
         {
             return new Result(ResultType.Success, null); ;
+        }
+
+        //201
+        public static Result Created()
+        {
+            return new Result(ResultType.Created, null); ;
+        }
+
+        //204
+        public static Result NoContent()
+        {
+            return new Result(ResultType.NoContent, null); ;
         }
 
         //400

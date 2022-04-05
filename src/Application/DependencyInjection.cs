@@ -12,7 +12,7 @@ namespace HikingTrailsApi.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            //services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddMediatR(Assembly.GetExecutingAssembly());
 
             //TODO: Check if needed

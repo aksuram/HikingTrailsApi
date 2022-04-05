@@ -11,7 +11,7 @@ namespace HikingTrailsApi.Application.Users
         public string FirstName { get; set; }
         public string LastName { get; set; }
 
-        public bool IsDeleted { get; set; } = false;
+        public bool IsDeleted { get; set; }
         public DateTime CreationDate { get; set; }
         public DateTime? LastLoginDate { get; set; }
     }

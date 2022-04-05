@@ -1,7 +1,6 @@
 ﻿using HikingTrailsApi.Application.Common.Interfaces;
-using HikingTrailsApi.Application.Models;
+using HikingTrailsApi.Application.Common.Models;
 using HikingTrailsApi.Application.Users;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -36,11 +35,11 @@ namespace HikingTrailsApi.WebApi.Controllers
         [HttpPost("api/register")]
         public async Task<ActionResult> Register([FromBody] UserRegistrationDto userRegistrationDto)
         {
-            Result result = await _applicationIdentityManager.RegisterUser(userRegistrationDto);
+            Result<UserVm> result = await _applicationIdentityManager.RegisterUser(userRegistrationDto);
 
             return result.Type switch
             {
-                ResultType.Success => Ok(),
+                ResultType.Created => CreatedAtRoute("GetUser", new { id = result.Value.Id }, result.Value),
                 ResultType.BadRequest => BadRequest(result.GetErrors()),
                 _ => StatusCode(StatusCodes.Status500InternalServerError)
             };

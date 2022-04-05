@@ -9,47 +9,48 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HikingTrailsApi.Application.Users.Queries.GetUsers
+namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
 {
-    public class GetUsersQuery : IRequest<Result<PaginatedList<UserVm>>>, IPaginatedListQuery
+    public class GetPostsQuery : IRequest<Result<PaginatedList<PostVm>>>, IPaginatedListQuery
     {
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 100;
     }
 
-    public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PaginatedList<UserVm>>>
+    public class GetPostsQueryHandler : IRequestHandler<GetPostsQuery, Result<PaginatedList<PostVm>>>
     {
         private readonly IApplicationDbContext _applicationDbContext;
         private readonly IMapper _mapper;
 
-        public GetUsersQueryHandler(IApplicationDbContext applicationDbContext, IMapper mapper)
+        public GetPostsQueryHandler(IApplicationDbContext applicationDbContext, IMapper mapper)
         {
             _applicationDbContext = applicationDbContext;
             _mapper = mapper;
         }
 
-        public async Task<Result<PaginatedList<UserVm>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PaginatedList<PostVm>>> Handle(GetPostsQuery request, CancellationToken cancellationToken)
         {
             var paginatedListValidator = new PaginatedListValidator();
             var validationResult = paginatedListValidator.Validate(request);
 
             if (!validationResult.IsValid)
             {
-                return Result<PaginatedList<UserVm>>.BadRequest(validationResult.Errors.Select(x =>
+                return Result<PaginatedList<PostVm>>.BadRequest(validationResult.Errors.Select(x =>
                     new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
-            var userVmList = await _applicationDbContext.Users
+            var postVmList = await _applicationDbContext.Posts
                 .AsNoTracking()
-                .ProjectTo<UserVm>(_mapper.ConfigurationProvider)
+                .Include(x => x.User)
+                .ProjectTo<PostVm>(_mapper.ConfigurationProvider)
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
 
-            if (userVmList.Items.Count == 0)
+            if (postVmList.Items.Count == 0)
             {
-                return Result<PaginatedList<UserVm>>.NotFound("PageNumber", "Nepavyko surasti naudotojų duotame puslapyje");    //404
+                return Result<PaginatedList<PostVm>>.NotFound("PageNumber", "Nepavyko surasti įrašų duotame puslapyje");    //404
             }
 
-            return Result<PaginatedList<UserVm>>.Success(userVmList);   //200
+            return Result<PaginatedList<PostVm>>.Success(postVmList);   //200
         }
     }
 }
