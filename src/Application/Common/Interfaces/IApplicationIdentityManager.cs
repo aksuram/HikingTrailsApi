@@ -6,7 +6,7 @@ namespace HikingTrailsApi.Application.Common.Interfaces
 {
     public interface IApplicationIdentityManager
     {
-        public Task<Result<string>> LogIn(UserLoginDto userLoginDto);
+        public Task<Result<UserLoginVm>> LogIn(UserLoginDto userLoginDto);
         //public Task LogOut();
         public Task<Result> RegisterUser(UserRegistrationDto userRegistrationDto);
         //public Task DeleteUser(Guid userId);

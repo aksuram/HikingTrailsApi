@@ -12,14 +12,13 @@ namespace HikingTrailsApi.Application.Common.Behaviours
     public class EventLoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IEventLoggable, IRequest<TResponse>
     {
-        private readonly IApplicationDbContextFactory<IApplicationDbContext> _applicationDbContextFactory;
+        private readonly IApplicationDbContext _applicationDbContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDateTime _dateTime;
 
-        public EventLoggingBehaviour(IHttpContextAccessor httpContextAccessor, IDateTime dateTime,
-            IApplicationDbContextFactory<IApplicationDbContext> applicationDbContextFactory)
+        public EventLoggingBehaviour(IHttpContextAccessor httpContextAccessor, IDateTime dateTime, IApplicationDbContext applicationDbContext)
         {
-            _applicationDbContextFactory = applicationDbContextFactory;
+            _applicationDbContext = applicationDbContext;
             _httpContextAccessor = httpContextAccessor;
             _dateTime = dateTime;
         }
@@ -30,11 +29,9 @@ namespace HikingTrailsApi.Application.Common.Behaviours
 
             var eventMessage = request.FormEventMessage();
 
-            using var applicationDbContext = _applicationDbContextFactory.CreateDbContext();
-
             if (!string.IsNullOrWhiteSpace(eventMessage))
             {
-                applicationDbContext.Events.Add(new Event()
+                _applicationDbContext.Events.Add(new Event()
                 {
                     Description = eventMessage,
                     CreationDate = _dateTime.Now,
@@ -42,7 +39,7 @@ namespace HikingTrailsApi.Application.Common.Behaviours
                         .FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty)
                 });
 
-                await applicationDbContext.SaveChangesAsync(cancellationToken);
+                await _applicationDbContext.SaveChangesAsync(cancellationToken);
             }
 
             return response;

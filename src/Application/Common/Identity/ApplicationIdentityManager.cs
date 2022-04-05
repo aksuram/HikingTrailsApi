@@ -2,13 +2,9 @@
 using HikingTrailsApi.Application.Models;
 using HikingTrailsApi.Application.Users;
 using HikingTrailsApi.Domain.Entities;
-using HikingTrailsApi.Domain.Enums;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -79,9 +75,9 @@ namespace HikingTrailsApi.Application.Common.Identity
         //    }
         //}
 
-        public async Task<Result<string>> LogIn(UserLoginDto userLoginDto)
+        public async Task<Result<UserLoginVm>> LogIn(UserLoginDto userLoginDto)
         {
-            if (userLoginDto == null) return Result<string>.Failure();
+            if (userLoginDto == null) return Result<UserLoginVm>.BadRequest();   //400
 
             //TODO: Iskelti validation?
             var userLoginDtoValidator = new UserLoginDtoValidator();
@@ -89,29 +85,42 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             if (!validationResult.IsValid)
             {
-                return Result<string>.Failure(validationResult.Errors.Select(x =>
-                    new FieldError(x.PropertyName, x.ErrorMessage)));
+                return Result<UserLoginVm>.BadRequest(validationResult.Errors.Select(x =>
+                    new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
             var user = await _applicationDbContext.Users
                 .FirstOrDefaultAsync(x => x.Email.ToLower() == userLoginDto.Email.ToLower());
 
-            if (user == null || user.IsDeleted || !user.IsEmailConfirmed)
+            if (user == null)
             {
-                return Result<string>.Failure("Login", "Couldn't login. Check if user email and password was entered correctly and if you have already confirmed your email.");
+                return Result<UserLoginVm>.Unauthorized("Login", "Nepavyko prisijungti");  //401
+            }
+
+            if (user.IsDeleted)
+            {
+                return Result<UserLoginVm>.Forbidden("User blocked", "Vartotojas yra užblokuotas");    //403
+            }
+
+            if (!user.IsEmailConfirmed)
+            {
+                return Result<UserLoginVm>.Forbidden("Confirm email", "Prieš prisijungiant patvirtinkite naudotojo paskyrą paspaudžiant nuorodą el. pašte"); //403
             }
 
             var isPasswordCorrect = BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password);
-
             if (!isPasswordCorrect)
             {
-                return Result<string>.Failure("Login", "Couldn't login. Check if user email and password was entered correctly and if you have already confirmed your email.");
+                return Result<UserLoginVm>.Unauthorized("Login", "Nepavyko prisijungti");  //401
             }
 
             user.LastLoginDate = _dateTime.Now;
             await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
 
-            return Result<string>.Success(GenerateJwtToken(user));
+            return Result<UserLoginVm>
+                .Success(new UserLoginVm
+                {
+                    Token = GenerateJwtToken(user)
+                }); //200
         }
 
         private string GenerateJwtToken(User user)
@@ -141,7 +150,7 @@ namespace HikingTrailsApi.Application.Common.Identity
 
         public async Task<Result> RegisterUser(UserRegistrationDto userRegistrationDto)
         {
-            if (userRegistrationDto == null) return Result.Failure();
+            if (userRegistrationDto == null) return Result.BadRequest();    //400
 
             //TODO: Iskelti validation?
             var userRegistrationDtoValidator = new UserRegistrationDtoValidator(_applicationDbContext);
@@ -149,8 +158,8 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             if (!validationResult.IsValid)
             {
-                return Result.Failure(validationResult.Errors.Select(x =>
-                    new FieldError(x.PropertyName, x.ErrorMessage)));
+                return Result.BadRequest(validationResult.Errors.Select(x =>
+                    new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
             var user = new User()
@@ -175,7 +184,8 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
 
-            return Result.Success();
+            //TODO: Change to 201?
+            return Result.Success();    //200
         }
 
         //public async Task DeleteUser(Guid id)

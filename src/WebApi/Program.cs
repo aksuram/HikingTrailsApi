@@ -12,9 +12,10 @@ namespace HikingTrailsApi.WebApi
         {
             var host = CreateHostBuilder(args).Build();
 
-            using var serviceScope = host.Services.CreateScope();
-
-            await ApplicationDbContextSeeding.SeedData(serviceScope);
+            using (var serviceScope = host.Services.CreateScope())
+            {
+                await ApplicationDbContextSeeding.SeedData(serviceScope);
+            }
 
             await host.RunAsync();
         }

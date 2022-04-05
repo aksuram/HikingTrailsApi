@@ -1,12 +1,13 @@
 ﻿using HikingTrailsApi.Application.Common.Interfaces;
+using HikingTrailsApi.Application.Models;
 using HikingTrailsApi.Application.Users;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace HikingTrailsApi.WebApi.Controllers
 {
-    [Authorize]
     [ApiController]
     public class IdentityController : ControllerBase
     {
@@ -17,23 +18,32 @@ namespace HikingTrailsApi.WebApi.Controllers
             _applicationIdentityManager = applicationIdentityManager;
         }
 
-        [AllowAnonymous]
         [HttpPost("api/login")]
         public async Task<ActionResult> Login([FromBody] UserLoginDto userLoginDto)
         {
-            var result = await _applicationIdentityManager.LogIn(userLoginDto);
+            Result<UserLoginVm> result = await _applicationIdentityManager.LogIn(userLoginDto);
 
-            return result.Succeeded ? Ok(result) : BadRequest(result);
+            return result.Type switch
+            {
+                ResultType.Success => Ok(result.Value),
+                ResultType.BadRequest => BadRequest(result.GetErrors()),
+                ResultType.Unauthorized => Unauthorized(result.GetErrors()),
+                ResultType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, result.GetErrors()),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
 
-        [Authorize(Roles = "User")]
-        //[AllowAnonymous]
         [HttpPost("api/register")]
         public async Task<ActionResult> Register([FromBody] UserRegistrationDto userRegistrationDto)
         {
-            var result = await _applicationIdentityManager.RegisterUser(userRegistrationDto);
+            Result result = await _applicationIdentityManager.RegisterUser(userRegistrationDto);
 
-            return result.Succeeded ? Ok(result) : BadRequest(result);
+            return result.Type switch
+            {
+                ResultType.Success => Ok(),
+                ResultType.BadRequest => BadRequest(result.GetErrors()),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
         }
     }
 }

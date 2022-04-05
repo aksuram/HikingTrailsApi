@@ -1,84 +1,173 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace HikingTrailsApi.Application.Models
 {
     public class Result<T> where T : class
     {
-        public bool Succeeded { get; set; }
-        public FieldError[] Errors { get; set; }
+        public ResultType Type { get; set; }
+        public ResultErrors Errors { get; set; }
         public T Value { get; set; }
 
-        private Result(bool succeeded, IEnumerable<FieldError> errors, T value)
+        private Result(ResultType type, IEnumerable<FieldError> errors, T value)
         {
-            Succeeded = succeeded;
-            Errors = errors.ToArray();
+            Type = type;
+            Errors = new ResultErrors(errors?.ToList());
             Value = value;
         }
 
+        public ResultErrors GetErrors()
+        {
+            return Errors.Errors == null ? null : Errors;
+        }
+
+        //200
         public static Result<T> Success(T value)
         {
-            return new Result<T>(true, Array.Empty<FieldError>(), value);
+            return new Result<T>(ResultType.Success, null, value);
         }
 
-        public static Result<T> Failure(IEnumerable<FieldError> errors)
+        //400
+        public static Result<T> BadRequest()
         {
-            return new Result<T>(false, errors, null);
+            return new Result<T>(ResultType.BadRequest, null, null);
         }
 
-        public static Result<T> Failure()
+        public static Result<T> BadRequest(IEnumerable<FieldError> errors)
         {
-            return Failure(new FieldError[] { new FieldError("Unknown", "Unknwon error occured") });
+            return new Result<T>(ResultType.BadRequest, errors, null);
         }
 
-        public static Result<T> Failure(string field, string error)
+        public static Result<T> BadRequest(string field, string error)
         {
-            return Failure(new FieldError[] { new FieldError(field, error) });
+            return BadRequest(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //401
+        public static Result<T> Unauthorized(IEnumerable<FieldError> errors)
+        {
+            return new Result<T>(ResultType.Unauthorized, errors, null);
+        }
+
+        public static Result<T> Unauthorized(string field, string error)
+        {
+            return Unauthorized(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //403
+        public static Result<T> Forbidden(IEnumerable<FieldError> errors)
+        {
+            return new Result<T>(ResultType.Forbidden, errors, null);
+        }
+
+        public static Result<T> Forbidden(string field, string error)
+        {
+            return Forbidden(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //404
+        public static Result<T> NotFound(IEnumerable<FieldError> errors)
+        {
+            return new Result<T>(ResultType.NotFound, errors, null);
+        }
+
+        public static Result<T> NotFound(string field, string error)
+        {
+            return NotFound(new List<FieldError> { new FieldError(field, error) });
         }
     }
 
     public class Result
     {
-        public bool Succeeded { get; set; }
-        public FieldError[] Errors { get; set; }
+        public ResultType Type { get; set; }
+        public ResultErrors Errors { get; set; }
 
-        private Result(bool succeeded, IEnumerable<FieldError> errors)
+        private Result(ResultType type, IEnumerable<FieldError> errors)
         {
-            Succeeded = succeeded;
-            Errors = errors.ToArray();
+            Type = type;
+            Errors = new ResultErrors(errors?.ToList());
         }
 
+        public ResultErrors GetErrors()
+        {
+            return Errors.Errors == null ? null : Errors;
+        }
+
+        //200
         public static Result Success()
         {
-            return new Result(true, Array.Empty<FieldError>());
+            return new Result(ResultType.Success, null); ;
         }
 
-        public static Result Failure(IEnumerable<FieldError> errors)
+        //400
+        public static Result BadRequest()
         {
-            return new Result(false, errors);
+            return new Result(ResultType.BadRequest, null);
         }
 
-        public static Result Failure()
+        public static Result BadRequest(IEnumerable<FieldError> errors)
         {
-            return Failure(new FieldError[] { new FieldError("Unknown", "Unknown error occured") });
+            return new Result(ResultType.BadRequest, errors);
         }
 
-        public static Result Failure(string field, string error)
+        public static Result BadRequest(string field, string error)
         {
-            return Failure(new FieldError[] { new FieldError(field, error) });
+            return BadRequest(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //401
+        public static Result Unauthorized(IEnumerable<FieldError> errors)
+        {
+            return new Result(ResultType.Unauthorized, errors);
+        }
+
+        public static Result Unauthorized(string field, string error)
+        {
+            return Unauthorized(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //403
+        public static Result Forbidden(IEnumerable<FieldError> errors)
+        {
+            return new Result(ResultType.Forbidden, errors);
+        }
+
+        public static Result Forbidden(string field, string error)
+        {
+            return Forbidden(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //404
+        public static Result NotFound(IEnumerable<FieldError> errors)
+        {
+            return new Result(ResultType.NotFound, errors);
+        }
+
+        public static Result NotFound(string field, string error)
+        {
+            return NotFound(new List<FieldError> { new FieldError(field, error) });
         }
     }
 
     public class FieldError
     {
+        public string Field { get; set; }
+        public string Error { get; set; }
+
         public FieldError(string field, string error)
         {
             Field = field;
             Error = error;
         }
+    }
 
-        public string Field { get; set; }
-        public string Error { get; set; }
+    public class ResultErrors
+    {
+        public List<FieldError> Errors { get; set; }
+
+        public ResultErrors(List<FieldError> errors)
+        {
+            Errors = errors;
+        }
     }
 }

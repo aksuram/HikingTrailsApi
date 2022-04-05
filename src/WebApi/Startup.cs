@@ -54,11 +54,11 @@ namespace HikingTrailsApi.WebApi
                 app.UseHsts();
             }
 
-            //TODO: Add CORS configuration
-
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            //TODO: Add CORS configuration
 
             app.UseAuthentication();
             app.UseAuthorization();
