@@ -56,17 +56,17 @@ namespace HikingTrailsApi.Application.Users.Commands.UpdateUser
             Guid.TryParse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue("id"), out var userId);
             if (request.Id != userId)
             {
-                return Result<UserVm>.Forbidden("Id", "Naudotojas negali keisti kitų naudotojų duomenų");    //403
+                return Result<UserVm>.Forbidden("Authorization", "Naudotojas negali keisti kitų naudotojų duomenų");    //403
             }
 
             if (user.IsDeleted)
             {
-                return Result<UserVm>.NotFound("Id", "Naudotojas yra užblokuotas"); //404
+                return Result<UserVm>.NotFound("User deleted", "Naudotojas yra užblokuotas"); //404
             }
 
             if (!user.IsEmailConfirmed)
             {
-                return Result<UserVm>.NotFound("Id", "Naudotojas yra nepatvirtinęs el. pašto adreso");  //404
+                return Result<UserVm>.NotFound("Email unconfirmed", "Naudotojas yra nepatvirtinęs el. pašto adreso");  //404
             }
 
             user.FirstName = request.FirstName;

@@ -63,7 +63,7 @@ namespace HikingTrailsApi.WebApi.Controllers
 
             return result.Type switch
             {
-                ResultType.Success => NoContent(),
+                ResultType.NoContent => NoContent(),
                 ResultType.NotFound => NotFound(result.GetErrors()),
                 _ => StatusCode(StatusCodes.Status500InternalServerError)
             };

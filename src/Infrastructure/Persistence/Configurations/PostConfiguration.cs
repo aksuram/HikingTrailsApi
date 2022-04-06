@@ -18,6 +18,9 @@ namespace HikingTrailsApi.Infrastructure.Persistence.Configurations
                 .IsRequired();
 
 
+            builder.Property(x => x.IsDeleted)
+                .IsRequired();
+
             builder.Property(x => x.CreationDate)
                 .IsRequired();
 

@@ -76,8 +76,6 @@ namespace HikingTrailsApi.Application.Common.Identity
 
         public async Task<Result<UserLoginVm>> LogIn(UserLoginDto userLoginDto)
         {
-            if (userLoginDto == null) return Result<UserLoginVm>.BadRequest();   //400
-
             var userLoginDtoValidator = new UserLoginDtoValidator();
             var validationResult = userLoginDtoValidator.Validate(userLoginDto);
 
@@ -97,12 +95,13 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             if (user.IsDeleted)
             {
-                return Result<UserLoginVm>.Forbidden("User blocked", "Vartotojas yra užblokuotas");    //403
+                return Result<UserLoginVm>.Forbidden("User blocked", "Naudotojas yra užblokuotas");    //403
             }
 
             if (!user.IsEmailConfirmed)
             {
-                return Result<UserLoginVm>.Forbidden("Confirm email", "Prieš prisijungiant patvirtinkite naudotojo paskyrą paspaudžiant nuorodą el. pašte"); //403
+                return Result<UserLoginVm>.Forbidden("Confirm email",
+                    "Prieš prisijungiant patvirtinkite naudotojo paskyrą paspaudžiant nuorodą el. pašte");  //403
             }
 
             var isPasswordCorrect = BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password);
@@ -114,11 +113,7 @@ namespace HikingTrailsApi.Application.Common.Identity
             user.LastLoginDate = _dateTime.Now;
             await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
 
-            return Result<UserLoginVm>
-                .Success(new UserLoginVm
-                {
-                    Token = GenerateJwtToken(user)
-                }); //200
+            return Result<UserLoginVm>.Success(new UserLoginVm{ Token = GenerateJwtToken(user) });  //200
         }
 
         private string GenerateJwtToken(User user)
@@ -137,7 +132,8 @@ namespace HikingTrailsApi.Application.Common.Identity
                     new Claim("role", user.Role.ToString())
                 }),
                 Expires = _dateTime.Now.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -170,14 +166,15 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             _applicationDbContext.Users.Add(user);
 
-            _applicationDbContext.Events.Add(
-                new Event()
-                {
-                    Description = $"{user.FirstName} {user.LastName} užsiregistravo prie sistemos",
-                    User = user,
-                    CreationDate = _dateTime.Now
-                }
-            );
+            //TODO: Remove events?
+            //_applicationDbContext.Events.Add(
+            //    new Event()
+            //    {
+            //        Description = $"{user.FirstName} {user.LastName} užsiregistravo prie sistemos",
+            //        User = user,
+            //        CreationDate = _dateTime.Now
+            //    }
+            //);
 
             await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
 

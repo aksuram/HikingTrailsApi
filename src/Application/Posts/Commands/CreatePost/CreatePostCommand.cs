@@ -45,11 +45,7 @@ namespace HikingTrailsApi.Application.Posts.Commands.CreatePost
                     new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
-            //This shouldn't ever fail
-            if (!Guid.TryParse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue("id"), out var userId))
-            {
-                return Result<PostVm>.BadRequest(); //400
-            }
+            Guid.TryParse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue("id"), out var userId);
 
             var post = new Post
             {

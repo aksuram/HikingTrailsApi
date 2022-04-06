@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace HikingTrailsApi.Application.Posts
+namespace HikingTrailsApi.Application.Comments
 {
-    public class PostVm
+    public class CommentVm
     {
         public Guid Id { get; set; }
-        public string Title { get; set; }
         public string Body { get; set; }
 
         public bool IsDeleted { get; set; }
@@ -14,5 +13,9 @@ namespace HikingTrailsApi.Application.Posts
 
         public Guid UserId { get; set; }
         public string UserFullName { get; set; }
+        public Guid PostId { get; set; }
+        //TODO: Add PostTitle?
+
+        public Guid? ReplyToId { get; set; }
     }
 }

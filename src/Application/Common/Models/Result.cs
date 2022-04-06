@@ -87,6 +87,17 @@ namespace HikingTrailsApi.Application.Common.Models
         {
             return NotFound(new List<FieldError> { new FieldError(field, error) });
         }
+
+        //409
+        public static Result<T> Conflict(IEnumerable<FieldError> errors)
+        {
+            return new Result<T>(ResultType.Conflict, errors, null);
+        }
+
+        public static Result<T> Conflict(string field, string error)
+        {
+            return Conflict(new List<FieldError> { new FieldError(field, error) });
+        }
     }
 
     public class Result
@@ -170,6 +181,17 @@ namespace HikingTrailsApi.Application.Common.Models
         public static Result NotFound(string field, string error)
         {
             return NotFound(new List<FieldError> { new FieldError(field, error) });
+        }
+
+        //409
+        public static Result Conflict(IEnumerable<FieldError> errors)
+        {
+            return new Result(ResultType.Conflict, errors);
+        }
+
+        public static Result Conflict(string field, string error)
+        {
+            return Conflict(new List<FieldError> { new FieldError(field, error) });
         }
     }
 

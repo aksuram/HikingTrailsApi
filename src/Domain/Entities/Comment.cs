@@ -8,6 +8,7 @@ namespace HikingTrailsApi.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Body { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
         public DateTime CreationDate { get; set; }
         public DateTime? EditDate { get; set; }
 

@@ -18,9 +18,11 @@ namespace HikingTrailsApi.Infrastructure.Persistence
         {
         }
 
+        //TODO: Create index on Comment CreationDate
+
         //CREATE/UPDATE DATABASE
         //1) Add migrations from main folder
-        //dotnet ef migrations add InitialCreate --project src\Infrastructure --startup-project src\WebApi --output-dir Persistence\Migrations
+        //dotnet ef migrations add PostCommentUpdate --project src\Infrastructure --startup-project src\WebApi --output-dir Persistence\Migrations
         //2) Create/update database from main folder
         //dotnet ef database update --project src\Infrastructure --startup-project src\WebApi
 

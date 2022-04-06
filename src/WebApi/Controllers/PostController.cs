@@ -1,6 +1,8 @@
 ﻿using HikingTrailsApi.Application.Common.Models;
 using HikingTrailsApi.Application.Posts;
 using HikingTrailsApi.Application.Posts.Commands.CreatePost;
+using HikingTrailsApi.Application.Posts.Commands.DeletePost;
+using HikingTrailsApi.Application.Posts.Commands.UpdatePost;
 using HikingTrailsApi.Application.Posts.Queries.GetPost;
 using HikingTrailsApi.Application.Posts.Queries.GetPosts;
 using MediatR;
@@ -35,7 +37,6 @@ namespace HikingTrailsApi.WebApi.Controllers
 
             return result.Type switch
             {
-                //TODO: Change to created at route
                 ResultType.Created => CreatedAtRoute("GetPost", new { id = result.Value.Id }, result.Value),
                 ResultType.BadRequest => BadRequest(result.GetErrors()),
                 _ => StatusCode(StatusCodes.Status500InternalServerError)
@@ -70,6 +71,44 @@ namespace HikingTrailsApi.WebApi.Controllers
                 ResultType.Success => Ok(result.Value),
                 ResultType.BadRequest => BadRequest(result.GetErrors()),
                 ResultType.NotFound => NotFound(result.GetErrors()),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        }
+
+        [Authorize]
+        [HttpDelete("api/post/{id:guid}")]
+        public async Task<ActionResult> DeletePost([FromRoute] Guid id)
+        {
+            Result result = await _mediator.Send(new DeletePostCommand { Id = id });
+
+            return result.Type switch
+            {
+                ResultType.NoContent => NoContent(),
+                ResultType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, result.GetErrors()),
+                ResultType.NotFound => NotFound(result.GetErrors()),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        }
+
+        [Authorize]
+        [HttpPatch("api/post/{id:guid}")]
+        public async Task<ActionResult> UpdatePost([FromRoute] Guid id, [FromBody] PostUpdateDto postUpdateDto)
+        {
+            Result<PostVm> result = await _mediator.Send(
+                new UpdatePostCommand
+                {
+                    Id = id,
+                    Title = postUpdateDto.Title,
+                    Body = postUpdateDto.Body
+                });
+
+            return result.Type switch
+            {
+                ResultType.Success => Ok(result.Value),
+                ResultType.BadRequest => BadRequest(result.GetErrors()),
+                ResultType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, result.GetErrors()),
+                ResultType.NotFound => NotFound(result.GetErrors()),
+                ResultType.Conflict => Conflict(result.GetErrors()),
                 _ => StatusCode(StatusCodes.Status500InternalServerError)
             };
         }
