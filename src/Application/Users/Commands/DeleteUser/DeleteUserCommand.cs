@@ -1,10 +1,13 @@
 ﻿using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Application.Common.Models;
+using HikingTrailsApi.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Z.EntityFramework.Plus;
 
 namespace HikingTrailsApi.Application.Users.Commands.DeleteUser
 {
@@ -22,9 +25,11 @@ namespace HikingTrailsApi.Application.Users.Commands.DeleteUser
             _applicationDbContext = applicationDbContext;
         }
 
+        //TODO: Admin user unblock endpoint?
         public async Task<Result> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
         {
             var user = await _applicationDbContext.Users
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             if (user == null)
@@ -37,8 +42,9 @@ namespace HikingTrailsApi.Application.Users.Commands.DeleteUser
                 return Result.NotFound("Id", "Naudotojas jau užblokuotas"); //404
             }
 
-            user.IsDeleted = true;
-            await _applicationDbContext.SaveChangesAsync(cancellationToken);
+            await _applicationDbContext.Users
+                    .Where(x => x.Id == request.Id)
+                    .UpdateAsync(x => new User { IsDeleted = true }, cancellationToken);
 
             return Result.NoContent();  //204
         }

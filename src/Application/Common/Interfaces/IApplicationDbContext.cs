@@ -12,6 +12,7 @@ namespace HikingTrailsApi.Application.Common.Interfaces
         DbSet<Event> Events { get; set; }
         DbSet<Post> Posts { get; set; }
         DbSet<Comment> Comments { get; set; }
+        DbSet<Rating> Ratings { get; set; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
         int SaveChanges();

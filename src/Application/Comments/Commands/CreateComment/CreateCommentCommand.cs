@@ -39,7 +39,8 @@ namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
         public async Task<Result<CommentVm>> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
         {
             var createCommentCommandValidator = new CreateCommentCommandValidator();
-            var validationResult = createCommentCommandValidator.Validate(request);
+            var validationResult = await createCommentCommandValidator
+                .ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
             {

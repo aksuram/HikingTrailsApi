@@ -21,6 +21,7 @@ namespace HikingTrailsApi.Domain.Entities
         public Comment ReplyTo { get; set; }
         public List<Comment> Replies { get; set; }
 
-        //TODO: Rating
+        public int Rating { get; set; }
+        public List<Rating> Ratings { get; set; }
     }
 }

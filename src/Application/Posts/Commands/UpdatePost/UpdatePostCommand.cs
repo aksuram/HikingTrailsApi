@@ -11,6 +11,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Z.EntityFramework.Plus;
 
 namespace HikingTrailsApi.Application.Posts.Commands.UpdatePost
 {
@@ -37,10 +38,12 @@ namespace HikingTrailsApi.Application.Posts.Commands.UpdatePost
             _dateTime = dateTime;
         }
 
+        //TODO: Make a different admin edit endpoint
         public async Task<Result<PostVm>> Handle(UpdatePostCommand request, CancellationToken cancellationToken)
         {
             var updatePostCommandValidator = new UpdatePostCommandValidator();
-            var validationResult = updatePostCommandValidator.Validate(request);
+            var validationResult = await updatePostCommandValidator
+                .ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
             {
@@ -49,6 +52,7 @@ namespace HikingTrailsApi.Application.Posts.Commands.UpdatePost
             }
 
             var post = await _applicationDbContext.Posts
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             if (post == null)
@@ -75,11 +79,20 @@ namespace HikingTrailsApi.Application.Posts.Commands.UpdatePost
                 return Result<PostVm>.Conflict("Time constraint", "Negalima redaguoti įrašo praėjus daugiau nei valandai nuo sukūrimo"); //409
             }
 
+            await _applicationDbContext.Posts
+                .Where(x => x.Id == request.Id)
+                .UpdateAsync(x =>
+                    new Post
+                    {
+                        Title = request.Title,
+                        Body = request.Body,
+                        EditDate = _dateTime.Now
+                    },
+                cancellationToken);
+
             post.Title = request.Title;
             post.Body = request.Body;
             post.EditDate = _dateTime.Now;
-
-            await _applicationDbContext.SaveChangesAsync(cancellationToken);
 
             //TODO: Might need to fetch Post creator(User) to properly map to PostVm
             return Result<PostVm>.Success(_mapper.Map<Post, PostVm>(post)); //200

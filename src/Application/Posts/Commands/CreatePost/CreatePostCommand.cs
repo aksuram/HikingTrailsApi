@@ -37,7 +37,8 @@ namespace HikingTrailsApi.Application.Posts.Commands.CreatePost
         public async Task<Result<PostVm>> Handle(CreatePostCommand request, CancellationToken cancellationToken)
         {
             var createPostCommandValidator = new CreatePostCommandValidator();
-            var validationResult = createPostCommandValidator.Validate(request);
+            var validationResult = await createPostCommandValidator
+                .ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
             {

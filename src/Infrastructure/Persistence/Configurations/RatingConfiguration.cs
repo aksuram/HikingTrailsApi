@@ -4,32 +4,22 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HikingTrailsApi.Infrastructure.Persistence.Configurations
 {
-    public class PostConfiguration : IEntityTypeConfiguration<Post>
+    public class RatingConfiguration : IEntityTypeConfiguration<Rating>
     {
-        public void Configure(EntityTypeBuilder<Post> builder)
+        public void Configure(EntityTypeBuilder<Rating> builder)
         {
             builder.Property(x => x.Id)
                 .IsRequired();
 
-            builder.Property(x => x.Title)
+            builder.Property(x => x.IsPositive)
                 .IsRequired();
 
-            builder.Property(x => x.Body)
-                .IsRequired();
-
-
-            builder.Property(x => x.IsDeleted)
-                .IsRequired();
 
             builder.Property(x => x.CreationDate)
                 .IsRequired();
 
 
             builder.Property(x => x.UserId)
-                .IsRequired();
-
-
-            builder.Property(x => x.Rating)
                 .IsRequired();
         }
     }

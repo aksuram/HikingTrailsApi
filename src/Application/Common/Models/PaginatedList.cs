@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HikingTrailsApi.Application.Common.Models
@@ -32,14 +33,14 @@ namespace HikingTrailsApi.Application.Common.Models
             Items = items;
         }
 
-        public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> query, int pageIndex, int pageSize)
+        public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> query, int pageIndex, int pageSize, CancellationToken cancellationToken)
         {
-            var itemCount = await query.CountAsync();
+            var itemCount = await query.CountAsync(cancellationToken);
 
             var items = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return new PaginatedList<T>(items, itemCount, pageIndex, pageSize);
         }

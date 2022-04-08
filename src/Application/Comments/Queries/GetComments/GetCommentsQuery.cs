@@ -37,7 +37,7 @@ namespace HikingTrailsApi.Application.Comments.Queries.GetComments
                 .Where(x => x.PostId == request.PostId)
                 .OrderBy(x => x.CreationDate)
                 .ProjectTo<FormattedCommentVm>(_mapper.ConfigurationProvider)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             if (formattedCommentVmList.Count == 0)
             {

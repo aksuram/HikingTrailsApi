@@ -18,6 +18,10 @@ namespace HikingTrailsApi.Domain.Entities
 
         public List<Comment> Comments { get; set; }
 
-        //TODO: Rating and Categories?
+        public int Rating { get; set; }
+        public List<Rating> Ratings { get; set; }
+
+        //TODO: Categories?
+        //TODO: Add comment count
     }
 }

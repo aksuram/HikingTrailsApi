@@ -1,13 +1,16 @@
 ﻿using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Application.Common.Models;
+using HikingTrailsApi.Domain.Entities;
 using HikingTrailsApi.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Z.EntityFramework.Plus;
 
 namespace HikingTrailsApi.Application.Posts.Commands.DeletePost
 {
@@ -30,6 +33,7 @@ namespace HikingTrailsApi.Application.Posts.Commands.DeletePost
         public async Task<Result> Handle(DeletePostCommand request, CancellationToken cancellationToken)
         {
             var post = await _applicationDbContext.Posts
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             if (post == null)
@@ -50,8 +54,9 @@ namespace HikingTrailsApi.Application.Posts.Commands.DeletePost
                 return Result.NotFound("Id", "Įrašas jau ištrintas");   //404
             }
 
-            post.IsDeleted = true;
-            await _applicationDbContext.SaveChangesAsync(cancellationToken);
+            await _applicationDbContext.Posts
+                    .Where(x => x.Id == request.Id)
+                    .UpdateAsync(x => new Post { IsDeleted = true }, cancellationToken);
 
             return Result.NoContent();  //204
         }

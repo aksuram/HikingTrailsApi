@@ -17,5 +17,7 @@ namespace HikingTrailsApi.Application.Comments
         //TODO: Add PostTitle?
 
         public Guid? ReplyToId { get; set; }
+
+        public int Rating { get; set; }
     }
 }

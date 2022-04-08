@@ -5,6 +5,7 @@ using HikingTrailsApi.Application.Common.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,6 +39,8 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPost
             {
                 return Result<PostVm>.NotFound("Id", "Nepavyko surasti įrašo"); //404
             }
+
+            //TODO: Add user rating to viewmodel?
 
             return Result<PostVm>.Success(postVm); //200
         }

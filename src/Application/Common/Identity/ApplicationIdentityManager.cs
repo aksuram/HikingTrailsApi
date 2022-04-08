@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Z.EntityFramework.Plus;
 
 namespace HikingTrailsApi.Application.Common.Identity
 {
@@ -77,7 +78,8 @@ namespace HikingTrailsApi.Application.Common.Identity
         public async Task<Result<UserLoginVm>> LogIn(UserLoginDto userLoginDto)
         {
             var userLoginDtoValidator = new UserLoginDtoValidator();
-            var validationResult = userLoginDtoValidator.Validate(userLoginDto);
+            var validationResult = await userLoginDtoValidator
+                .ValidateAsync(userLoginDto);
 
             if (!validationResult.IsValid)
             {
@@ -86,6 +88,7 @@ namespace HikingTrailsApi.Application.Common.Identity
             }
 
             var user = await _applicationDbContext.Users
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Email.ToLower() == userLoginDto.Email.ToLower());
 
             if (user == null)
@@ -110,8 +113,9 @@ namespace HikingTrailsApi.Application.Common.Identity
                 return Result<UserLoginVm>.Unauthorized("Login", "Nepavyko prisijungti");  //401
             }
 
-            user.LastLoginDate = _dateTime.Now;
-            await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
+            await _applicationDbContext.Users
+                    .Where(x => x.Email.ToLower() == userLoginDto.Email.ToLower())
+                    .UpdateAsync(x => new User { LastLoginDate = _dateTime.Now });
 
             return Result<UserLoginVm>.Success(new UserLoginVm{ Token = GenerateJwtToken(user) });  //200
         }
@@ -144,10 +148,9 @@ namespace HikingTrailsApi.Application.Common.Identity
 
         public async Task<Result<UserVm>> RegisterUser(UserRegistrationDto userRegistrationDto)
         {
-            if (userRegistrationDto == null) return Result<UserVm>.BadRequest();    //400
-
             var userRegistrationDtoValidator = new UserRegistrationDtoValidator(_applicationDbContext);
-            var validationResult = userRegistrationDtoValidator.Validate(userRegistrationDto);
+            var validationResult = await userRegistrationDtoValidator
+                .ValidateAsync(userRegistrationDto);
 
             if (!validationResult.IsValid)
             {

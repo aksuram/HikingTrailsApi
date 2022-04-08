@@ -14,5 +14,7 @@ namespace HikingTrailsApi.Application.Posts
 
         public Guid UserId { get; set; }
         public string UserFullName { get; set; }
+
+        public int Rating { get; set; }
     }
 }

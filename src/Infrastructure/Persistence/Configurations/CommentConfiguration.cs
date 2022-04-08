@@ -27,6 +27,10 @@ namespace HikingTrailsApi.Infrastructure.Persistence.Configurations
 
             builder.Property(x => x.PostId)
                 .IsRequired();
+
+
+            builder.Property(x => x.Rating)
+                .IsRequired();
         }
     }
 }

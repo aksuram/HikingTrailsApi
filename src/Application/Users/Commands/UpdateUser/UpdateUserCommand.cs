@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Z.EntityFramework.Plus;
 
 namespace HikingTrailsApi.Application.Users.Commands.UpdateUser
 {
@@ -34,10 +35,14 @@ namespace HikingTrailsApi.Application.Users.Commands.UpdateUser
             _httpContextAccessor = httpContextAccessor;
         }
 
+        //TODO: User change password endpoint
+        //TODO: Admin user change endpoint
+        //TODO: Email confirmation endpoint
         public async Task<Result<UserVm>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
             var updateUserCommandValidator = new UpdateUserCommandValidator();
-            var validationResult = updateUserCommandValidator.Validate(request);
+            var validationResult = await updateUserCommandValidator
+                .ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
             {
@@ -46,6 +51,7 @@ namespace HikingTrailsApi.Application.Users.Commands.UpdateUser
             }
 
             var user = await _applicationDbContext.Users
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             if (user == null)
@@ -69,10 +75,18 @@ namespace HikingTrailsApi.Application.Users.Commands.UpdateUser
                 return Result<UserVm>.NotFound("Email unconfirmed", "Naudotojas yra nepatvirtinęs el. pašto adreso");  //404
             }
 
+            await _applicationDbContext.Users
+                .Where(x => x.Id == request.Id)
+                .UpdateAsync(x =>
+                    new User
+                    {
+                        FirstName = request.FirstName,
+                        LastName = request.LastName
+                    },
+                cancellationToken);
+
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
-
-            await _applicationDbContext.SaveChangesAsync(cancellationToken);
 
             return Result<UserVm>.Success(_mapper.Map<User, UserVm>(user)); //200
         }

@@ -31,7 +31,8 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
         public async Task<Result<PaginatedList<PostVm>>> Handle(GetPostsQuery request, CancellationToken cancellationToken)
         {
             var paginatedListValidator = new PaginatedListValidator();
-            var validationResult = paginatedListValidator.Validate(request);
+            var validationResult = await paginatedListValidator
+                .ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
             {
@@ -43,7 +44,7 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
                 .AsNoTracking()
                 .Include(x => x.User)
                 .ProjectTo<PostVm>(_mapper.ConfigurationProvider)
-                .PaginatedListAsync(request.PageNumber, request.PageSize);
+                .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
 
             if (postVmList.Items.Count == 0)
             {
