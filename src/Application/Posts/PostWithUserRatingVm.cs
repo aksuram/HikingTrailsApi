@@ -3,7 +3,7 @@ using System;
 
 namespace HikingTrailsApi.Application.Posts
 {
-    public class PostVm
+    public class PostWithUserRatingVm
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
@@ -15,6 +15,7 @@ namespace HikingTrailsApi.Application.Posts
 
         public Guid UserId { get; set; }
         public string UserFullName { get; set; }
+        public RatingVm UserRating { get; set; }
 
         public int Rating { get; set; }
     }

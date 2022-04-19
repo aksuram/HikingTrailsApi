@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Globalization;
+using System.Text.Json;
 
 namespace HikingTrailsApi.WebApi
 {
@@ -58,7 +59,11 @@ namespace HikingTrailsApi.WebApi
 
             app.UseRouting();
 
-            //TODO: Add CORS configuration
+            app.UseCors(x => x
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+            );
 
             app.UseAuthentication();
             app.UseAuthorization();

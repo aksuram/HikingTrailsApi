@@ -1,4 +1,7 @@
-﻿namespace HikingTrailsApi.Application.Users
+﻿using HikingTrailsApi.Domain.Enums;
+using System;
+
+namespace HikingTrailsApi.Application.Users
 {
     public class UserLoginVm
     {

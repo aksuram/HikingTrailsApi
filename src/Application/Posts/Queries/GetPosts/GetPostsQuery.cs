@@ -3,10 +3,12 @@ using AutoMapper.QueryableExtensions;
 using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Application.Common.Mappings;
 using HikingTrailsApi.Application.Common.Models;
+using HikingTrailsApi.Application.Ratings;
 using HikingTrailsApi.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -14,13 +16,13 @@ using System.Threading.Tasks;
 
 namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
 {
-    public class GetPostsQuery : IRequest<Result<PaginatedList<PostVm>>>, IPaginatedListQuery
+    public class GetPostsQuery : IRequest<Result<PaginatedList<PostWithUserRatingVm>>>, IPaginatedListQuery
     {
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 100;
     }
 
-    public class GetPostsQueryHandler : IRequestHandler<GetPostsQuery, Result<PaginatedList<PostVm>>>
+    public class GetPostsQueryHandler : IRequestHandler<GetPostsQuery, Result<PaginatedList<PostWithUserRatingVm>>>
     {
         private readonly IApplicationDbContext _applicationDbContext;
         private readonly IMapper _mapper;
@@ -31,7 +33,7 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
             _mapper = mapper;
         }
 
-        public async Task<Result<PaginatedList<PostVm>>> Handle(GetPostsQuery request, CancellationToken cancellationToken)
+        public async Task<Result<PaginatedList<PostWithUserRatingVm>>> Handle(GetPostsQuery request, CancellationToken cancellationToken)
         {
             var paginatedListValidator = new PaginatedListValidator();
             var validationResult = await paginatedListValidator
@@ -39,42 +41,62 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
 
             if (!validationResult.IsValid)
             {
-                return Result<PaginatedList<PostVm>>.BadRequest(validationResult.Errors.Select(x =>
+                return Result<PaginatedList<PostWithUserRatingVm>>.BadRequest(validationResult.Errors.Select(x =>
                     new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
-            var postVmList = await _applicationDbContext.Posts
+            var posts = await _applicationDbContext.Posts
                 .AsNoTracking()
                 .Include(x => x.User)
                 .Where(x => !x.IsDeleted)
                 .OrderBy(x => x.CreationDate)
-                .ProjectTo<PostVm>(_mapper.ConfigurationProvider)
+                .ProjectTo<PostWithUserRatingVm>(_mapper.ConfigurationProvider)
                 .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
 
             //IF USER IS LOGGEDIN
             //GET USER RATINGS ON POSTS
             //var ratings = await _applicationDbContext.Ratings
             //    .AsNoTracking()
-            //    .Include(x => x.Post)
-            //    .Where(x => x.UserId == Guid.NewGuid() && x => !x.IsDeleted)
+            //    .Where(x => x.UserId == guid && !x.IsDeleted)
             //    .ToList
 
-            var expression = BuildExpression(postVmList);
-
-            var ratings = await _applicationDbContext.Ratings
-                .AsNoTracking()
-                .Where(expression)
-                .ToListAsync();
-
-            if (postVmList.Items.Count == 0)
+            if (posts.Items.Count == 0)
             {
-                return Result<PaginatedList<PostVm>>.NotFound("PageNumber", "Nepavyko surasti įrašų duotame puslapyje");    //404
+                return Result<PaginatedList<PostWithUserRatingVm>>.NotFound("PageNumber", "Nepavyko surasti įrašų duotame puslapyje");    //404
             }
 
-            return Result<PaginatedList<PostVm>>.Success(postVmList);   //200
+            var whereExpression = BuildWhereExpression(posts);
+            var ratings = await _applicationDbContext.Ratings
+                .AsNoTracking()
+                .Where(whereExpression)
+                .ToListAsync();
+
+            posts = AddUserRatingsToPosts(ratings, posts);
+
+            return Result<PaginatedList<PostWithUserRatingVm>>.Success(posts);   //200
         }
 
-        public Expression<Func<Rating, bool>> BuildExpression(PaginatedList<PostVm> postVmList)
+        public PaginatedList<PostWithUserRatingVm> AddUserRatingsToPosts(List<Rating> ratings, PaginatedList<PostWithUserRatingVm> posts)
+        {
+            if (ratings.Count == 0) return posts;
+
+            var postDictionary = posts.Items.ToDictionary(x => x.Id, x => x);
+
+            foreach (var rating in ratings)
+            {
+                if (rating.PostId.HasValue)
+                {
+                    if (postDictionary.TryGetValue(rating.PostId.Value, out var post))
+                    {
+                        post.UserRating = _mapper.Map<Rating, RatingVm>(rating);
+                    }
+                }
+            }
+
+            return posts;
+        }
+
+        public Expression<Func<Rating, bool>> BuildWhereExpression(PaginatedList<PostWithUserRatingVm> posts)
         {
             var userGuid = Guid.Parse("5a18bba1-c8c5-4cf8-95e2-4631f451e1f9");
             Expression expression = null;
@@ -83,9 +105,9 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
             var postProperty = Expression.Property(rating, "PostId");
 
             var firstOr = true;
-            foreach (var postVm in postVmList.Items)
+            foreach (var post in posts.Items)
             {
-                var postConstant = Expression.Convert(Expression.Constant(postVm.Id), postProperty.Type);
+                var postConstant = Expression.Convert(Expression.Constant(post.Id), postProperty.Type);
                 var postEquality = Expression.Equal(postProperty, postConstant);
 
                 if (firstOr)

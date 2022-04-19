@@ -9,9 +9,9 @@ namespace HikingTrailsApi.Application.Common.Mappings
     {
         public RatingMappingProfile()
         {
-            CreateMap<Rating, RatingVm>()
-                .ForMember(x => x.UserFullName, opt =>
-                    opt.MapFrom(y => y.User.FirstName + " " + y.User.LastName));
+            CreateMap<Rating, RatingVm>();
+                //.ForMember(x => x.UserFullName, opt =>
+                //    opt.MapFrom(y => y.User.FirstName + " " + y.User.LastName));
         }
     }
 }

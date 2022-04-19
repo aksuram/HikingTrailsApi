@@ -20,6 +20,8 @@ namespace HikingTrailsApi.Application
 
             services.AddScoped<IApplicationIdentityManager, ApplicationIdentityManager>();
 
+            services.AddCors();
+
             return services;
         }
     }

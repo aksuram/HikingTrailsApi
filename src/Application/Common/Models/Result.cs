@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace HikingTrailsApi.Application.Common.Models
 {
@@ -202,7 +203,7 @@ namespace HikingTrailsApi.Application.Common.Models
 
         public FieldError(string field, string error)
         {
-            Field = field;
+            Field = JsonNamingPolicy.CamelCase.ConvertName(field);
             Error = error;
         }
     }

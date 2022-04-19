@@ -133,7 +133,11 @@ namespace HikingTrailsApi.Application.Common.Identity
                     new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim("id", user.Id.ToString()),
-                    new Claim("role", user.Role.ToString())
+                    new Claim("email", user.Email),
+                    new Claim("role", user.Role.ToString()),
+                    new Claim("firstName", user.FirstName),
+                    new Claim("lastName", user.LastName),
+                    new Claim("fullName", $"{user.FirstName} {user.LastName}")
                 }),
                 Expires = _dateTime.Now.AddDays(7),
                 SigningCredentials = new SigningCredentials(

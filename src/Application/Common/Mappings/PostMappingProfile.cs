@@ -11,6 +11,12 @@ namespace HikingTrailsApi.Application.Common.Mappings
             CreateMap<Post, PostVm>()
                 .ForMember(x => x.UserFullName, opt =>
                     opt.MapFrom(y => y.User.FirstName + " " + y.User.LastName));
+
+            CreateMap<Post, PostWithUserRatingVm>()
+                .ForMember(x => x.UserFullName, opt =>
+                    opt.MapFrom(y => y.User.FirstName + " " + y.User.LastName))
+                .ForMember(x => x.UserRating, opt =>
+                    opt.Ignore());
         }
     }
 }

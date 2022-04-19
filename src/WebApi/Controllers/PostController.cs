@@ -59,7 +59,7 @@ namespace HikingTrailsApi.WebApi.Controllers
         [HttpGet("api/post/")]
         public async Task<ActionResult> GetPostList([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 100)
         {
-            Result<PaginatedList<PostVm>> result = await _mediator.Send(
+            Result<PaginatedList<PostWithUserRatingVm>> result = await _mediator.Send(
                 new GetPostsQuery
                 {
                     PageNumber = pageNumber,
