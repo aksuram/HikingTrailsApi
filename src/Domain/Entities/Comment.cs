@@ -23,5 +23,7 @@ namespace HikingTrailsApi.Domain.Entities
 
         public int Rating { get; set; }
         public List<Rating> Ratings { get; set; }
+
+        public List<Image> Images { get; set; }
     }
 }

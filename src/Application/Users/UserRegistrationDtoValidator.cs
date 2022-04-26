@@ -54,6 +54,15 @@ namespace HikingTrailsApi.Application.Users
                 .WithMessage("Pakartotinas slaptažodis negali būti tuščias")
                 .Equal(x => x.Password)
                 .WithMessage("Slaptažodžiai turi sutapti");
+
+            RuleFor(x => x.Avatar)
+                .Cascade(CascadeMode.Stop)
+                .Must(avatar => { return avatar.ContentType == "image/jpeg"; })
+                .When(y => y.Avatar != null)
+                .WithMessage("Galima įkelti tik JPEG formato nuotraukas")
+                .Must(avatar => { return avatar.Length <= 1000000; })   //1 MB
+                .When(y => y.Avatar != null)
+                .WithMessage("Pasirinkta per didelė nuotrauka, neviršykite 1 MB");
         }
 
         private static async Task<bool> UniqueEmail(string email,
@@ -71,7 +80,6 @@ namespace HikingTrailsApi.Application.Users
             var number = new Regex("[0-9]");
 
             //TODO: Check validity
-
             return (upper.IsMatch(password) && lower.IsMatch(password) && number.IsMatch(password));
         }
     }

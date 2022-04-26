@@ -33,7 +33,7 @@ namespace HikingTrailsApi.WebApi.Controllers
         }
 
         [HttpPost("api/register")]
-        public async Task<ActionResult> Register([FromBody] UserRegistrationDto userRegistrationDto)
+        public async Task<ActionResult> Register([FromForm] UserRegistrationDto userRegistrationDto)
         {
             Result<UserVm> result = await _applicationIdentityManager.RegisterUser(userRegistrationDto);
 

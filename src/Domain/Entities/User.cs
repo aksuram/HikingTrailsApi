@@ -22,5 +22,6 @@ namespace HikingTrailsApi.Domain.Entities
         public List<Event> Events { get; set; }
         public List<Post> Posts { get; set; }
         public List<Comment> Comments { get; set; }
+        public List<Image> Images { get; set; }
     }
 }

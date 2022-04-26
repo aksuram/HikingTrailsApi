@@ -1,12 +1,15 @@
 ﻿using HikingTrailsApi.Application;
+using HikingTrailsApi.Application.Common.Interfaces;
+using HikingTrailsApi.Application.Services;
 using HikingTrailsApi.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using System.Globalization;
-using System.Text.Json;
+using System.IO;
 
 namespace HikingTrailsApi.WebApi
 {
@@ -29,6 +32,8 @@ namespace HikingTrailsApi.WebApi
             services.AddSingleton(Configuration);
 
             services.AddMvc();
+
+            services.AddScoped<IImageStorageService, ImageStorageService>();
 
             services.ConfigureSwagger();
         }
@@ -64,6 +69,16 @@ namespace HikingTrailsApi.WebApi
                 .AllowAnyMethod()
                 .AllowAnyHeader()
             );
+
+            //Create Image directory if it doesn't already exist before any requests are made
+            var staticFileDirectory = Path.Combine(env.ContentRootPath, "Images");
+            Directory.CreateDirectory(staticFileDirectory);
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(staticFileDirectory),
+                RequestPath = "/images"
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();

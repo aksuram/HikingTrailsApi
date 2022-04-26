@@ -1,4 +1,6 @@
-﻿namespace HikingTrailsApi.Application.Users
+﻿using Microsoft.AspNetCore.Http;
+
+namespace HikingTrailsApi.Application.Users
 {
     public class UserRegistrationDto
     {
@@ -8,5 +10,6 @@
 
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public IFormFile Avatar { get; set; } 
     }
 }

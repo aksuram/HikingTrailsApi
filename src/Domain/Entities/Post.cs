@@ -17,6 +17,7 @@ namespace HikingTrailsApi.Domain.Entities
         public User User { get; set; }
 
         public List<Comment> Comments { get; set; }
+        public List<Image> Images { get; set; }
 
         public int Rating { get; set; }
         public List<Rating> Ratings { get; set; }

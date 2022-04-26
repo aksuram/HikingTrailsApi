@@ -8,6 +8,5 @@ namespace HikingTrailsApi.Application.Common.Interfaces
     {
         public Task<Result<UserVm>> RegisterUser(UserRegistrationDto userRegistrationDto);
         public Task<Result<UserLoginVm>> LogIn(UserLoginDto userLoginDto);
-        //public Task LogOut();
     }
 }

@@ -6,6 +6,7 @@ using HikingTrailsApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -22,58 +23,21 @@ namespace HikingTrailsApi.Application.Common.Identity
         private readonly IDateTime _dateTime;
         private readonly JwtSettings _jwtSettings;
         private readonly IMapper _mapper;
+        private readonly IImageStorageService _imageStorageService;
 
         public ApplicationIdentityManager(
             IApplicationDbContext applicationDbContext,
             IDateTime dateTime,
             JwtSettings jwtSettings,
-            IMapper mapper)
+            IMapper mapper,
+            IImageStorageService imageStorageService)
         {
             _applicationDbContext = applicationDbContext;
             _dateTime = dateTime;
             _jwtSettings = jwtSettings;
             _mapper = mapper;
+            _imageStorageService = imageStorageService;
         }
-
-        //public async Task LogOut()
-        //{
-        //    if (!Guid.TryParse(_httpContextAccessor?.HttpContext?.User?
-        //        .FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
-        //    {
-        //        return;
-        //    }
-
-        //    User user;
-        //    try
-        //    {
-        //        user = await _userManager.FindByIdAsync(userId.ToString());
-        //        if (user == null) { return; }
-
-        //        await _signInManager.SignOutAsync();
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return;
-        //    }
-
-        //    //Log the event
-        //    using var applicationDbContext = _applicationDbContextFactory.CreateDbContext();
-        //    try
-        //    {
-        //        applicationDbContext.Events.Add(new Event()
-        //        {
-        //            Description = $"Atsijungė nuo sistemos",
-        //            UserId = user.Id,
-        //            CreationDate = _dateTime.Now
-        //        });
-
-        //        await applicationDbContext.SaveChangesAsync(CancellationToken.None);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new DatabaseException("Nepavyko išsaugoti duomenų duomenų bazėje", e);
-        //    }
-        //}
 
         public async Task<Result<UserLoginVm>> LogIn(UserLoginDto userLoginDto)
         {
@@ -162,26 +126,24 @@ namespace HikingTrailsApi.Application.Common.Identity
                     new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
+            var avatarImage = await _imageStorageService.SaveImage(userRegistrationDto.Avatar);
+
             var user = new User()
             {
                 Email = userRegistrationDto.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(userRegistrationDto.Password),
                 FirstName = userRegistrationDto.FirstName,
                 LastName = userRegistrationDto.LastName,
-                CreationDate = _dateTime.Now
+                CreationDate = _dateTime.Now,
+                IsEmailConfirmed = true //TODO: Create an email confirmation solution
             };
 
-            _applicationDbContext.Users.Add(user);
+            if (avatarImage != null)
+            {
+                user.Images = new List<Image>(new[] { avatarImage });
+            }
 
-            //TODO: Remove events?
-            //_applicationDbContext.Events.Add(
-            //    new Event()
-            //    {
-            //        Description = $"{user.FirstName} {user.LastName} užsiregistravo prie sistemos",
-            //        User = user,
-            //        CreationDate = _dateTime.Now
-            //    }
-            //);
+            _applicationDbContext.Users.Add(user);
 
             await _applicationDbContext.SaveChangesAsync(CancellationToken.None);
 
