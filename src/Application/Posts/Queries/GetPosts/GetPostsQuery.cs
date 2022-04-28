@@ -6,6 +6,7 @@ using HikingTrailsApi.Application.Common.Models;
 using HikingTrailsApi.Application.Ratings;
 using HikingTrailsApi.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,18 +20,21 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
     public class GetPostsQuery : IRequest<Result<PaginatedList<PostWithUserRatingVm>>>, IPaginatedListQuery
     {
         public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 100;
+        public int PageSize { get; set; } = 10;
     }
 
     public class GetPostsQueryHandler : IRequestHandler<GetPostsQuery, Result<PaginatedList<PostWithUserRatingVm>>>
     {
         private readonly IApplicationDbContext _applicationDbContext;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public GetPostsQueryHandler(IApplicationDbContext applicationDbContext, IMapper mapper)
+        public GetPostsQueryHandler(IApplicationDbContext applicationDbContext,
+            IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _applicationDbContext = applicationDbContext;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Result<PaginatedList<PostWithUserRatingVm>>> Handle(GetPostsQuery request, CancellationToken cancellationToken)
@@ -48,57 +52,35 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
             var posts = await _applicationDbContext.Posts
                 .AsNoTracking()
                 .Include(x => x.User)
+                .ThenInclude(x => x.Images)
                 .Where(x => !x.IsDeleted)
-                .OrderBy(x => x.CreationDate)
+                .OrderByDescending(x => x.CreationDate)
                 .ProjectTo<PostWithUserRatingVm>(_mapper.ConfigurationProvider)
                 .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
-
-            //IF USER IS LOGGEDIN
-            //GET USER RATINGS ON POSTS
-            //var ratings = await _applicationDbContext.Ratings
-            //    .AsNoTracking()
-            //    .Where(x => x.UserId == guid && !x.IsDeleted)
-            //    .ToList
 
             if (posts.Items.Count == 0)
             {
                 return Result<PaginatedList<PostWithUserRatingVm>>.NotFound("PageNumber", "Nepavyko surasti įrašų duotame puslapyje");    //404
             }
 
-            var whereExpression = BuildWhereExpression(posts);
-            var ratings = await _applicationDbContext.Ratings
-                .AsNoTracking()
-                .Where(whereExpression)
-                .ToListAsync();
+            if (_httpContextAccessor?.HttpContext?.User?.Identity.IsAuthenticated ?? false)
+            {
+                var userId = _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "id");
+                var whereExpression = BuildUserRatingsForPostsWhereExpression(new Guid(userId.Value), posts);
+                var ratings = await _applicationDbContext.Ratings
+                    .AsNoTracking()
+                    .Where(whereExpression)
+                    .ToListAsync();
 
-            posts = AddUserRatingsToPosts(ratings, posts);
+                posts = AddUserRatingsToPosts(ratings, posts);
+            }
 
             return Result<PaginatedList<PostWithUserRatingVm>>.Success(posts);   //200
         }
 
-        public PaginatedList<PostWithUserRatingVm> AddUserRatingsToPosts(List<Rating> ratings, PaginatedList<PostWithUserRatingVm> posts)
+        public Expression<Func<Rating, bool>> BuildUserRatingsForPostsWhereExpression(
+            Guid userId, PaginatedList<PostWithUserRatingVm> posts)
         {
-            if (ratings.Count == 0) return posts;
-
-            var postDictionary = posts.Items.ToDictionary(x => x.Id, x => x);
-
-            foreach (var rating in ratings)
-            {
-                if (rating.PostId.HasValue)
-                {
-                    if (postDictionary.TryGetValue(rating.PostId.Value, out var post))
-                    {
-                        post.UserRating = _mapper.Map<Rating, RatingVm>(rating);
-                    }
-                }
-            }
-
-            return posts;
-        }
-
-        public Expression<Func<Rating, bool>> BuildWhereExpression(PaginatedList<PostWithUserRatingVm> posts)
-        {
-            var userGuid = Guid.Parse("5a18bba1-c8c5-4cf8-95e2-4631f451e1f9");
             Expression expression = null;
 
             var rating = Expression.Parameter(typeof(Rating), "rating");
@@ -121,13 +103,33 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
             }
 
             var userProperty = Expression.Property(rating, "UserId");
-            var userConstant = Expression.Constant(userGuid);
+            var userConstant = Expression.Constant(userId);
             var userEquality = Expression.Equal(userProperty, userConstant);
 
             expression = Expression.And(expression, userEquality);
             var lambda = Expression.Lambda<Func<Rating, bool>>(expression, rating);
 
             return lambda;
+        }
+
+        public PaginatedList<PostWithUserRatingVm> AddUserRatingsToPosts(List<Rating> ratings, PaginatedList<PostWithUserRatingVm> posts)
+        {
+            if (ratings.Count == 0) return posts;
+
+            var postDictionary = posts.Items.ToDictionary(x => x.Id, x => x);
+
+            foreach (var rating in ratings)
+            {
+                if (rating.PostId.HasValue)
+                {
+                    if (postDictionary.TryGetValue(rating.PostId.Value, out var post))
+                    {
+                        post.UserRating = _mapper.Map<Rating, RatingVm>(rating);
+                    }
+                }
+            }
+
+            return posts;
         }
     }
 }

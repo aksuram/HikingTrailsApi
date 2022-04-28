@@ -46,7 +46,7 @@ namespace HikingTrailsApi.WebApi.Controllers
         [HttpGet("api/post/{id:guid}", Name = "GetPost")]
         public async Task<ActionResult> GetPost([FromRoute] Guid id)
         {
-            Result<PostVm> result = await _mediator.Send(new GetPostQuery { Id = id });
+            Result<PostWithUserRatingVm> result = await _mediator.Send(new GetPostQuery { Id = id });
 
             return result.Type switch
             {
@@ -57,7 +57,7 @@ namespace HikingTrailsApi.WebApi.Controllers
         }
 
         [HttpGet("api/post/")]
-        public async Task<ActionResult> GetPostList([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 100)
+        public async Task<ActionResult> GetPostList([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             Result<PaginatedList<PostWithUserRatingVm>> result = await _mediator.Send(
                 new GetPostsQuery

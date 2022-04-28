@@ -53,6 +53,7 @@ namespace HikingTrailsApi.Application.Common.Identity
 
             var user = await _applicationDbContext.Users
                 .AsNoTracking()
+                .Include(x => x.Images)
                 .FirstOrDefaultAsync(x => x.Email.ToLower() == userLoginDto.Email.ToLower());
 
             if (user == null)
@@ -88,6 +89,8 @@ namespace HikingTrailsApi.Application.Common.Identity
         {
             var secret = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
 
+            var userAvatar = user.Images.FirstOrDefault();
+
             var securityTokenDescriptor = new SecurityTokenDescriptor()
             {
                 //TODO: add claims which could be used client side
@@ -101,7 +104,8 @@ namespace HikingTrailsApi.Application.Common.Identity
                     new Claim("role", user.Role.ToString()),
                     new Claim("firstName", user.FirstName),
                     new Claim("lastName", user.LastName),
-                    new Claim("fullName", $"{user.FirstName} {user.LastName}")
+                    new Claim("fullName", $"{user.FirstName} {user.LastName}"),
+                    new Claim("avatar", userAvatar?.Path ?? "")
                 }),
                 Expires = _dateTime.Now.AddDays(7),
                 SigningCredentials = new SigningCredentials(

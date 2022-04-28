@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Application.Common.Models;
 using HikingTrailsApi.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -60,6 +62,11 @@ namespace HikingTrailsApi.Application.Posts.Commands.CreatePost
 
             _applicationDbContext.Posts.Add(post);
             await _applicationDbContext.SaveChangesAsync(cancellationToken);
+
+            //var postWithAdditionalData = await _applicationDbContext.Posts
+            //    .AsNoTracking()
+            //    .ProjectTo<PostWithUserRatingVm>(_mapper.ConfigurationProvider)
+            //    .FirstOrDefaultAsync(x => x.Id)
 
             return Result<PostVm>.Created(_mapper.Map<Post, PostVm>(post)); //201
         }

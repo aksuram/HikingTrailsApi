@@ -16,8 +16,8 @@ namespace HikingTrailsApi.Application.Common.Models
                 .Cascade(CascadeMode.Stop)
                 .GreaterThan(0)
                 .WithMessage("Puslapio dydis negali būti žemesnis už 1")
-                .LessThanOrEqualTo(1000)
-                .WithMessage("Puslapio dydis negali viršyti 1000");
+                .LessThanOrEqualTo(100)
+                .WithMessage("Puslapio dydis negali viršyti 100");
         }
     }
 }

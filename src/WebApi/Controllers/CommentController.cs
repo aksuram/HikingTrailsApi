@@ -26,7 +26,7 @@ namespace HikingTrailsApi.WebApi.Controllers
         [HttpPost("api/post/{postId:guid}/comment/")]
         public async Task<ActionResult> CreateComment([FromRoute] Guid postId, [FromBody] CommentCreateDto commentCreateDto)
         {
-            Result<CommentVm> result = await _mediator.Send(
+            Result<CommentWithUserRatingVm> result = await _mediator.Send(
                 new CreateCommentCommand
                 {
                     PostId = postId,

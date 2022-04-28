@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HikingTrailsApi.Application.Common.Interfaces;
 using HikingTrailsApi.Application.Common.Models;
 using HikingTrailsApi.Domain.Entities;
@@ -13,14 +14,14 @@ using System.Threading.Tasks;
 
 namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
 {
-    public class CreateCommentCommand : IRequest<Result<CommentVm>>
+    public class CreateCommentCommand : IRequest<Result<CommentWithUserRatingVm>>
     {
         public Guid PostId { get; set; }
         public string Body { get; set; }
         public Guid? ReplyToId { get; set; }
     }
 
-    public class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand, Result<CommentVm>>
+    public class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand, Result<CommentWithUserRatingVm>>
     {
         private readonly IApplicationDbContext _applicationDbContext;
         private readonly IMapper _mapper;
@@ -36,7 +37,7 @@ namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
             _dateTime = dateTime;
         }
 
-        public async Task<Result<CommentVm>> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
+        public async Task<Result<CommentWithUserRatingVm>> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
         {
             var createCommentCommandValidator = new CreateCommentCommandValidator();
             var validationResult = await createCommentCommandValidator
@@ -44,7 +45,7 @@ namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
 
             if (!validationResult.IsValid)
             {
-                return Result<CommentVm>.BadRequest(validationResult.Errors.Select(x =>
+                return Result<CommentWithUserRatingVm>.BadRequest(validationResult.Errors.Select(x =>
                     new FieldError(x.PropertyName, x.ErrorMessage)));   //400
             }
 
@@ -54,12 +55,12 @@ namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
 
             if (post == null)
             {
-                return Result<CommentVm>.NotFound("PostId", "Nerastas nurodytas įrašas");   //404
+                return Result<CommentWithUserRatingVm>.NotFound("PostId", "Nerastas nurodytas įrašas");   //404
             }
 
             if (post.IsDeleted)
             {
-                return Result<CommentVm>.NotFound("PostId", "Nurodytas įrašas yra ištrintas");   //404
+                return Result<CommentWithUserRatingVm>.NotFound("PostId", "Nurodytas įrašas yra ištrintas");   //404
             }
 
             //TODO: Test if a comment can reply to itself and if another verification needs to be written here
@@ -71,17 +72,17 @@ namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
 
                 if (replyToComment == null)
                 {
-                    return Result<CommentVm>.NotFound("ReplyToId", "Nerastas nurodytas komentaras");    //404
+                    return Result<CommentWithUserRatingVm>.NotFound("ReplyToId", "Nerastas nurodytas komentaras");    //404
                 }
 
                 if (replyToComment.PostId != request.PostId)
                 {
-                    return Result<CommentVm>.BadRequest("PostId", "Nesutampa komentaro į kurį atsakoma įrašas ir kuriamo komentaro įrašas");    //400
+                    return Result<CommentWithUserRatingVm>.BadRequest("PostId", "Nesutampa komentaro į kurį atsakoma įrašas ir kuriamo komentaro įrašas");    //400
                 }
 
                 if (replyToComment.ReplyToId.HasValue)
                 {
-                    return Result<CommentVm>.Conflict("ReplyToId", "Negalima atsakyti į komentaro atsakymą");   //409
+                    return Result<CommentWithUserRatingVm>.Conflict("ReplyToId", "Negalima atsakyti į komentaro atsakymą");   //409
                 }
             }
 
@@ -101,7 +102,14 @@ namespace HikingTrailsApi.Application.Comments.Commands.CreateComment
             _applicationDbContext.Comments.Add(comment);
             await _applicationDbContext.SaveChangesAsync(cancellationToken);
 
-            return Result<CommentVm>.Created(_mapper.Map<Comment, CommentVm>(comment)); //201
+            var commentWithAdditionalData = await _applicationDbContext.Comments
+                .AsNoTracking()
+                .Include(x => x.User)
+                .ThenInclude(x => x.Images)
+                .ProjectTo<CommentWithUserRatingVm>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(x => x.Id == comment.Id);
+
+            return Result<CommentWithUserRatingVm>.Created(commentWithAdditionalData); //201
         }
     }
 }
