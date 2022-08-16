@@ -63,6 +63,7 @@ namespace HikingTrailsApi.Application.Posts.Commands.CreatePost
             _applicationDbContext.Posts.Add(post);
             await _applicationDbContext.SaveChangesAsync(cancellationToken);
 
+            //TODO: Remove if unused
             //var postWithAdditionalData = await _applicationDbContext.Posts
             //    .AsNoTracking()
             //    .ProjectTo<PostWithUserRatingVm>(_mapper.ConfigurationProvider)

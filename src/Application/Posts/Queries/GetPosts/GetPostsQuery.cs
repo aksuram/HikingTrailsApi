@@ -78,6 +78,7 @@ namespace HikingTrailsApi.Application.Posts.Queries.GetPosts
             return Result<PaginatedList<PostWithUserRatingVm>>.Success(posts);   //200
         }
 
+        //TODO: Could probably figure out a proper sql query rather than this
         public Expression<Func<Rating, bool>> BuildUserRatingsForPostsWhereExpression(
             Guid userId, PaginatedList<PostWithUserRatingVm> posts)
         {

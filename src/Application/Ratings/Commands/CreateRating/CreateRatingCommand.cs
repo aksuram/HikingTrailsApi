@@ -53,6 +53,7 @@ namespace HikingTrailsApi.Application.Ratings.Commands.CreateRating
 
             var ratingChangeFactor = request.IsPositive ? 1 : -1;
 
+            //TODO: Fix this after adding trails
             if (request.PostId.HasValue)
             {
                 var alreadyCreatedRating = await _applicationDbContext.Ratings

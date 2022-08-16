@@ -14,7 +14,6 @@ namespace HikingTrailsApi.Application.Common.Models
         public int TotalPageCount { get; }
         public int TotalItemCount { get; }
 
-        //TODO: Might not be needed?
         public bool HasPreviousPage => PageIndex > 1;
         public bool HasNextPage => PageIndex < TotalPageCount;
 

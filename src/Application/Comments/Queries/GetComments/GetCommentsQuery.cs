@@ -37,7 +37,7 @@ namespace HikingTrailsApi.Application.Comments.Queries.GetComments
 
         public async Task<Result<FormattedCommentListVm>> Handle(GetCommentsQuery request, CancellationToken cancellationToken)
         {
-            //TODO: Check if WHERE clause is done in the database and not in the program
+            //TODO: Check if WHERE clause is executed in the database and not the program itself
             var comments = await _applicationDbContext.Comments
                 .AsNoTracking()
                 .Include(x => x.User)
@@ -69,6 +69,7 @@ namespace HikingTrailsApi.Application.Comments.Queries.GetComments
             return Result<FormattedCommentListVm>.Success(formattedComments);  //200
         }
 
+        //TODO: Could probably figure out a proper sql query rather than this
         public Expression<Func<Rating, bool>> BuildUserRatingsForCommentsWhereExpression(
             Guid userId, List<CommentWithUserRatingVm> comments)
         {
