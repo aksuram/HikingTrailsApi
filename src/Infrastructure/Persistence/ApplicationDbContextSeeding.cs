@@ -31,18 +31,17 @@ namespace HikingTrailsApi.Infrastructure.Persistence
             if (configuration["Seeding:IsEnabled"].ToLower() != "true") { return; }
             var seedingCategories = GetSeedingCategories(configuration);
 
-            if (seedingCategories.Contains("Users")) await SeedInitialUsers(applicationDbContext);
+            if (seedingCategories.Contains("Users")) await SeedUsers(applicationDbContext);
         }
 
-        private static async Task SeedInitialUsers(IApplicationDbContext applicationDbContext)
+        private static async Task SeedUsers(IApplicationDbContext applicationDbContext)
         {
-            //Inital user list
             var usersToSeed = new List<User>
             {
                 new User
                 {
-                    Email = "admin@admin.lt",
-                    Password = BCrypt.Net.BCrypt.HashPassword("Taip1234"),
+                    Email = "admin@admin.com",
+                    Password = BCrypt.Net.BCrypt.HashPassword("Yep12345"),
                     Role = Role.Administrator,
                     FirstName = "Admin",
                     LastName = "",
@@ -51,18 +50,8 @@ namespace HikingTrailsApi.Infrastructure.Persistence
                 },
                 new User
                 {
-                    Email = "moderator@moderator.lt",
-                    Password = BCrypt.Net.BCrypt.HashPassword("Taip1234"),
-                    Role = Role.Moderator,
-                    FirstName = "Moderator",
-                    LastName = "",
-                    IsEmailConfirmed = true,
-                    CreationDate = DateTime.UtcNow
-                },
-                new User
-                {
-                    Email = "user@user.lt",
-                    Password = BCrypt.Net.BCrypt.HashPassword("Taip1234"),
+                    Email = "user@user.com",
+                    Password = BCrypt.Net.BCrypt.HashPassword("Yep12345"),
                     Role = Role.User,
                     FirstName = "User",
                     LastName = "",
